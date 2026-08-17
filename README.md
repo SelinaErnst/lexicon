@@ -21,9 +21,14 @@ and the Flutter guide for
 
 ## Getting started
 
-see pubspec.yaml
+try this
+```
+```
+dart run examples\main.dart
+```
 
 ## Usage
+
 
 Read dictionary files:
 
