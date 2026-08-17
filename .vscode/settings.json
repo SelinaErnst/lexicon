@@ -14,5 +14,6 @@
     "cSpell.words": [
         "pleco",
         "unicode"
-    ]
+    ],
+    "editor.formatOnSaveMode": "modificationsIfAvailable"
 }
