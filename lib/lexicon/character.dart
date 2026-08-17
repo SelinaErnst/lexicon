@@ -52,8 +52,9 @@ class Character {
     Map<String, dynamic>? mapColor,
     Map<String, dynamic>? mapColorFav,
   }) : categories = {} {
-    if (mapColor != null && mapSyntax != null)
-      {setSyntax(mapSyntax, mapColor, mapColorFav: mapColorFav);}
+    if (mapColor != null && mapSyntax != null) {
+      setSyntax(mapSyntax, mapColor, mapColorFav: mapColorFav);
+    }
 
     categories.addAll({for (final category in _identifiers) category: String});
     categories.addAll(specs);
@@ -211,6 +212,66 @@ class Character {
   }
 
   /* ================================================================ */
+  /*                            INFO SCREEN                           */
+  /* ================================================================ */
+
+  void info() {
+    const int width = 23;
+    final String distance = ''.padRight(width);
+    final String listIndent = '|${distance.substring(0, distance.length - 1)}';
+    final StringBuffer buffer = StringBuffer();
+    final Map<String, dynamic> data = toMap();
+
+    for (final entry in data.entries) {
+      final String cat = entry.key;
+      final dynamic values = entry.value;
+
+      // Format the category header to be uppercase and left-aligned
+      final String catText = '|${cat.toUpperCase().padRight(width - 3)}';
+      final String head = '\n${catText.padRight(width)}';
+
+      if (values is List || values is Map) {
+        final List<String> listLines = [];
+
+        // Normalize both Maps and Lists into an iterable list of key-value pairs
+        final List<MapEntry<dynamic, dynamic>> items = [];
+        if (values is Map) {
+          items.addAll(values.entries);
+        } else if (values is List) {
+          for (int i = 0; i < values.length; i++) {
+            items.add(MapEntry(i, values[i]));
+          }
+        }
+        final int numItems = items.length;
+        for (int idx = 0; idx < numItems; idx++) {
+          final MapEntry item = items[idx];
+          String elementStr;
+
+          if (values is Map) {
+            elementStr = '${item.key}: ${item.value}';
+          } else {
+            elementStr = '${item.value}';
+          }
+
+          listLines.add('| - $elementStr\n');
+
+          // Add the vertical alignment spacer if it isn't the final element
+          if (idx + 1 != numItems) {
+            listLines.add(listIndent);
+          }
+        }
+
+        String helper = '$head${listLines.join('')}';
+        helper = helper.replaceFirstMapped(RegExp(r'\n$'), (match) => '');
+        buffer.write(helper);
+      } else if (values is String || values is num) {
+        buffer.write('$head| $values');
+      } 
+    }
+
+    print(buffer.toString());
+  }
+  /* ================================================================ */
   /*                              SETTER                              */
   /* ================================================================ */
 
@@ -309,7 +370,13 @@ class ChCharacter extends Character {
   ];
   List<String> get baseCategories => _identifiers;
 
-  ChCharacter({super.specs, super.entry, super.mapSyntax, super.mapColor, super.mapColorFav});
+  ChCharacter({
+    super.specs,
+    super.entry,
+    super.mapSyntax,
+    super.mapColor,
+    super.mapColorFav,
+  });
 
   /* ================================================================ */
   /*                             OVERRIDE                             */

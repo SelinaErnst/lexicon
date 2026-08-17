@@ -4,22 +4,19 @@ import 'package:test/test.dart';
 import 'dart:io';
 
 void main() async {
-  final String pathDictionaryJSONL =
-      '/home/selina/Applications/MyApps/suhan/packages/lexicon/assets/MCD.jsonl';
-  final String pathSyntaxMap =
-      '/home/selina/Applications/MyApps/suhan/packages/lexicon/assets/syntax.json';
-  final String pathColorMap =
-      '/home/selina/Applications/MyApps/suhan/packages/lexicon/assets/colors.json';
-  final String pathCategoryMap =
-      '/home/selina/Applications/MyApps/suhan/packages/lexicon/assets/categories.json';
-  Map<String, dynamic> synatxMap = readJSONSync(File(pathSyntaxMap))!;
-  Map<String, dynamic> colorMap = readJSONSync(File(pathColorMap))!;
-  Map<String, dynamic> catMap = readJSONSync(File(pathCategoryMap))!;
+  final synatxMap = readJSONSync(File('assets/syntax.json'))!;
+  final colorMap = readJSONSync(File('assets/colors.json'))!;
+  final catMap = readJSONSync(File('assets/categories.json'))!;
   Dictionary dictionary = Dictionary();
   dictionary.addSyntax(synatxMap, colorMap);
-  await dictionary.read(File(pathDictionaryJSONL), categories: catMap);
+  await dictionary.read(File('assets/MCD.jsonl'), categories: catMap);
   test('create dictionary of characters', () async {
     expect(dictionary.isNotEmpty, true);
-    print(dictionary);
+    List<int> numbers = List.generate(10, (index) => index);
+    print(dictionary[List.generate(10, (index) => index)]);
+  });
+
+  test('examine character in dictionary', () async {
+    print(dictionary['ri4'][0].info());
   });
 }
