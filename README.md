@@ -22,7 +22,7 @@ and the Flutter guide for
 ## Getting started
 
 try this
-```
+
 ```
 dart run examples\main.dart
 ```
