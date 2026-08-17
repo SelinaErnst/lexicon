@@ -15,7 +15,6 @@ void main() async {
   await dictionary.read(File('assets/MCD.jsonl'), categories: catMap);
   /* –––––––––––––––––––––––– dictionary init ––––––––––––––––––––––– */
 
-  List<int> numbers = List.generate(10, (index) => index);
   print(dictionary[List.generate(10, (index) => index)]);
   dictionary['ri4'][0].info();
 }

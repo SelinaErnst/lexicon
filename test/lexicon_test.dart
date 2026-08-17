@@ -12,7 +12,6 @@ void main() async {
   await dictionary.read(File('assets/MCD.jsonl'), categories: catMap);
   test('create dictionary of characters', () async {
     expect(dictionary.isNotEmpty, true);
-    List<int> numbers = List.generate(10, (index) => index);
     print(dictionary[List.generate(10, (index) => index)]);
   });
 

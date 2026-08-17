@@ -244,7 +244,7 @@ class Character {
         }
         final int numItems = items.length;
         for (int idx = 0; idx < numItems; idx++) {
-          final MapEntry item = items[idx];
+          final MapEntry<dynamic, dynamic> item = items[idx];
           String elementStr;
 
           if (values is Map) {
