@@ -5,10 +5,8 @@ import 'package:lexicon/lexicon/utils.dart';
 import 'dart:io';
 import 'package:test/test.dart';
 
-final String pathSyntax =
-    'assets/syntax.json';
-final String pathColors =
-    'assets/colors.json';
+final String pathSyntax = 'assets/syntax.json';
+final String pathColors = 'assets/colors.json';
 
 Map<String, dynamic> colors = readJSONSync(File(pathColors))!;
 Map<String, dynamic> data = readJSONSync(File(pathSyntax))!;

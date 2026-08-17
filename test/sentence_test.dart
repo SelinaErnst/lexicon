@@ -10,10 +10,8 @@ void main() {
 
 void runSentence() {
   /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-  final String pathSyntax =
-      'assets/syntax.json';
-  final String pathColors =
-      'assets/colors.json';
+  final String pathSyntax = 'assets/syntax.json';
+  final String pathColors = 'assets/colors.json';
   Map<String, dynamic> colors = readJSONSync(File(pathColors))!;
   Map<String, dynamic> data = readJSONSync(File(pathSyntax))!;
   Map<String, String> favColors = {

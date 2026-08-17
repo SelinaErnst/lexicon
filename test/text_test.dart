@@ -16,10 +16,8 @@ void runTextModifier() {
   final String pinyinNumeric = 'ba1ba5 shi4 wo3 de.';
   final String pinyinTones = 'bāba shì wǒ de.';
 
-  final String pathSyntax =
-      'assets/syntax.json';
-  final String pathColors =
-      'assets/colors.json';
+  final String pathSyntax = 'assets/syntax.json';
+  final String pathColors = 'assets/colors.json';
   Map<String, dynamic> colors = readJSONSync(File(pathColors))!;
   Map<String, dynamic> data = readJSONSync(File(pathSyntax))!;
 
@@ -92,10 +90,8 @@ void runTextAction() {
   group('TextAction', () {
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
-    final String pathSyntax =
-        'assets/syntax.json';
-    final String pathColors =
-        'assets/colors.json';
+    final String pathSyntax = 'assets/syntax.json';
+    final String pathColors = 'assets/colors.json';
 
     Map<String, dynamic> colors = readJSONSync(File(pathColors))!;
     Map<String, dynamic> data = readJSONSync(File(pathSyntax))!;
