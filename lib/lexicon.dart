@@ -1,0 +1,1 @@
+export 'lexicon/character.dart';

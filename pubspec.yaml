@@ -1,0 +1,16 @@
+name: lexicon
+description: "A pure Dart package for background character dictionaries and grammar rules."
+version: 0.0.1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  meta: ^1.10.0      # For data immutability annotations (@immutable)
+  logging: ^1.2.0   # Replaces print statements cleanly for production
+  collection: ^1.18.0
+  path: ^1.9.0
+  
+dev_dependencies:
+  test: ^1.24.0      # Replaces flutter_test with ultra-fast pure Dart unit tests
+  lints: ^3.0.0     # Replaces flutter_lints with standard Dart code rules

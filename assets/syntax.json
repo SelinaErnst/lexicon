@@ -1,0 +1,202 @@
+{
+    "newline": {
+        "caller": [
+            "newline",
+            "nl"
+        ],
+        "syntax": [
+            ""
+        ]
+    },
+    "tab": {
+        "caller": [
+            "tab"
+        ],
+        "syntax": [
+            ""
+        ]
+    },
+    "bracket": {
+        "caller": [
+            "bracket"
+        ],
+        "syntax": [
+            "[",
+            "]"
+        ]
+    },
+    "link": {
+        "caller": [
+            "link"
+        ],
+        "syntax": [
+            "",
+            ""
+        ]
+    },
+    "italic": {
+        "caller": [
+            "italic",
+            "i"
+        ],
+        "syntax": [
+            "",
+            ""
+        ]
+    },
+    "underline": {
+        "caller": [
+            "underline",
+            "u"
+        ],
+        "syntax": [
+            "",
+            ""
+        ]
+    },
+    "bold": {
+        "caller": [
+            "bold",
+            "b"
+        ],
+        "syntax": [
+            "",
+            ""
+        ]
+    },
+    "narrow_bold": {
+        "caller": [
+            "narrow_bold",
+            "nb"
+        ],
+        "syntax": [
+            "",
+            ""
+        ]
+    },
+    "slightly_bold": {
+        "caller": [
+            "slightly_bold",
+            "sb"
+        ],
+        "syntax": [
+            "",
+            ""
+        ]
+    },
+    "bg": {
+        "caller": [
+            "bg"
+        ],
+        "syntax": [
+            "",
+            ""
+        ]
+    },
+    "textsmall": {
+        "caller": [
+            "textsmall",
+            "s",
+            "small"
+        ],
+        "syntax": [
+            "AA00",
+            ""
+        ]
+    },
+    "textbig": {
+        "caller": [
+            "textbig",
+            "b",
+            "big"
+        ],
+        "syntax": [
+            "AA10",
+            ""
+        ]
+    },
+    "color": {
+        "caller": [
+            "color"
+        ],
+        "syntax": [
+            "",
+            ""
+        ]
+    },
+    "block": {
+        "caller": [
+            "block"
+        ],
+        "syntax": [
+            "",
+            ""
+        ]
+    },
+    "left": {
+        "caller": [
+            "left"
+        ],
+        "syntax": [
+            "1A0A"
+        ]
+    },
+    "right": {
+        "caller": [
+            "right"
+        ],
+        "syntax": [
+            " A0P"
+        ]
+    },
+    "indent": {
+        "caller": [
+            "indent"
+        ],
+        "syntax": [
+            "1A0P"
+        ]
+    },
+    "line": {
+        "caller": [
+            "line"
+        ],
+        "syntax": [
+            "AAAA"
+        ]
+    },
+    "point": {
+        "caller": [
+            "point",
+            "p"
+        ],
+        "syntax": [
+            "◼"
+        ]
+    },
+    "dot": {
+        "caller": [
+            "dot",
+            "d"
+        ],
+        "syntax": [
+            "·"
+        ]
+    },
+    "mark": {
+        "caller": [
+            "mark"
+        ],
+        "syntax": [
+            "uA0Z"
+        ]
+    },
+    "markline": {
+        "caller": [
+            "markline"
+        ],
+        "syntax": [
+            "zA0Z"
+        ]
+    }
+}
