@@ -135,7 +135,6 @@ Future<void> writeJsonToFile(Map<String, dynamic> ogMap, File file) async {
 //       Map<String, dynamic> entry = json.decode(line) as Map<String, dynamic>;
 //       Character char = ChCharacter(specs: categories, entry: entry);
 
-
 //     }
 //     return jsonDecode(jsonString) as Map<String, dynamic>;
 //   } catch (e) {

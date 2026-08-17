@@ -8,7 +8,6 @@ void main() {
 
 void runCharacterTests() {
   group('Character', () {
-
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
     var empty = ChCharacter();
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
@@ -24,7 +23,6 @@ void runCharacterTests() {
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
     test('create copy', () {
-
       expect(copy.exact(empty, ignoreNull: true), true);
       expect(copy.exact(empty, ignoreNull: false), false);
 
@@ -161,9 +159,8 @@ void runCharacterTests() {
     var small = ChCharacter(entry: {'simplified': '八', 'pinyin': 'ba1'});
 
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-    
-    test('images', () {
 
+    test('images', () {
       expect(one['images'], null);
       expect(weird['images'], ['x', 'y']);
       expect(small.get('images'), null);

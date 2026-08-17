@@ -23,7 +23,11 @@ class Sentence {
     _text = mod.set(_text).toCleanLanguage('chinese').result;
 
     _pinyin = pinyin;
-    _pinyin = mod.set(_pinyin).toCleanLanguage('english').toNumericPinyin().result;
+    _pinyin = mod
+        .set(_pinyin)
+        .toCleanLanguage('english')
+        .toNumericPinyin()
+        .result;
     _processedPinyin = mod.toToneMarkedPinyin().result;
 
     _transl = translation;

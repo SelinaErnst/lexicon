@@ -7,9 +7,7 @@ void main() {
   runDictionaryTests();
 }
 
-
 void runDictionaryTests() {
-
   /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
   var empty = ChCharacter();
   var char = ChCharacter(entry: {'simplified': '八', 'pinyin': 'bā'});
@@ -21,11 +19,10 @@ void runDictionaryTests() {
 
   // var Dictionary
   group('Dictionary', () {
-
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
     var d = Dictionary();
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-    
+
     test('initializing empty', () {
       expect(d.name, '');
       expect(d.sortingKey, '');
@@ -33,9 +30,9 @@ void runDictionaryTests() {
       expect(d.characters.length, 0);
       expect(d.rules.length, 0);
     });
-    
+
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-    var copy = d.copyWith(sortingKey: 'pinyin',sortingOrd: 'ascending');
+    var copy = d.copyWith(sortingKey: 'pinyin', sortingOrd: 'ascending');
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
     test('create copy', () {
@@ -53,7 +50,6 @@ void runDictionaryTests() {
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
     test('initializing populated', () {
-      
       expect(filled.length, 4);
       expect(filled.createInstance().length, 0);
 
@@ -85,7 +81,5 @@ void runDictionaryTests() {
     });
 
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-
   });
 }
-

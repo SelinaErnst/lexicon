@@ -659,7 +659,13 @@ class Dictionary extends Iterable<Character> {
         if (entry.containsKey('pronunciation')) {
           entry['pinyin'] = entry['pronunciation'];
         }
-        ChCharacter char = ChCharacter(specs: categories, entry: entry, mapSyntax: _mapSyntax, mapColor: _mapColor, mapColorFav: _mapColorFav);
+        ChCharacter char = ChCharacter(
+          specs: categories,
+          entry: entry,
+          mapSyntax: _mapSyntax,
+          mapColor: _mapColor,
+          mapColorFav: _mapColorFav,
+        );
         jsonlCharacters.add(char);
       }
       _setCharacters(jsonlCharacters);

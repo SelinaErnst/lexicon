@@ -25,7 +25,6 @@ void main() {
 }
 
 void runRuleTest() {
-
   /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
   final modText = TextModifier('');
@@ -34,7 +33,6 @@ void runRuleTest() {
   /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
   group('Rule', () {
-
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
     final rule1 = Rule();
@@ -54,7 +52,6 @@ void runRuleTest() {
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
     test('initializing empty', () {
-
       expect(rule1.isEmpty, true);
       expect(rule2.isEmpty, true);
 
@@ -104,7 +101,6 @@ void runRuleTest() {
       expect(rule.uniqueID(), '_AiMD_a');
       expect(rule.uniqueID(method: 'hash'), '_1822514334');
 
-      
       rule.set('tags', ['tag']);
       expect(rule['tags'] == rule.tags, true);
 

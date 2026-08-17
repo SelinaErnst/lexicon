@@ -239,14 +239,16 @@ class Rule extends Character {
   List<String> _referenceOthers(Character thisChar) => charactersAll.characters
       .where((char) => char != thisChar)
       .map(
-        (char) => modifier.set(char['simplified'] as String).toCleanRef().result,
+        (char) =>
+            modifier.set(char['simplified'] as String).toCleanRef().result,
       )
       .where((char) => char.isNotEmpty)
       .toList();
 
   List<String> get references => characters.characters
       .map(
-        (char) => modifier.set(char['simplified'] as String).toCleanRef().result,
+        (char) =>
+            modifier.set(char['simplified'] as String).toCleanRef().result,
       )
       .where((char) => char.isNotEmpty)
       .toList();
@@ -297,7 +299,7 @@ class Rule extends Character {
 
         final newCategories = {
           ...categories,
-          ...{'other_characters': List<String>, },
+          ...{'other_characters': List<String>},
         };
 
         newCategories.remove('characters');

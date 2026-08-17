@@ -266,7 +266,7 @@ class Character {
         buffer.write(helper);
       } else if (values is String || values is num) {
         buffer.write('$head| $values');
-      } 
+      }
     }
 
     print(buffer.toString());

@@ -25,14 +25,13 @@ void runSentence() {
   /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
   group('Sentence', () {
-
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
     final mod = TextModifier('');
     mod.addAction(data, colors, mapColorFav: favColors);
-    
+
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-    
+
     test('initializing', () {
       final s = Sentence(
         mod: mod,
@@ -43,23 +42,23 @@ void runSentence() {
       expect(s.text, 'abac。');
       expect(s.pinyin, 'ābǎc.');
       expect(s.toString(), 'Sentence: abac。');
-      expect(s.toMap().length,3);
+      expect(s.toMap().length, 3);
     });
 
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
     test('write with syntax', () {
       final s = Sentence(mod: mod, text: 'abac.', translation: 'abac.');
-      expect(s.applySyntax(),'abac。abac.');
+      expect(s.applySyntax(), 'abac。abac.');
       final sts = Sentence(
         mod: mod,
         text: 'abac.',
         pinyin: 'a1ba3c.',
         translation: 'abac.',
       );
-      expect(sts.applySyntax(),'abac。ābǎc.abac.');
+      expect(sts.applySyntax(), 'abac。ābǎc.abac.');
     });
-    
+
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
   });
 }
