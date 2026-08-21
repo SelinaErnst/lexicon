@@ -4,16 +4,16 @@ import 'package:lexicon/lexicon/utils.dart';
 import 'package:test/test.dart';
 import 'dart:io';
 
-void main() {
-  runSentence();
-}
+// void main() {
+//   runSentence();
+// }
 
-void runSentence() {
+void main() {
   /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
   final String pathSyntax = 'assets/syntax.json';
   final String pathColors = 'assets/colors.json';
-  Map<String, dynamic> colors = readJSONSync(File(pathColors))!;
-  Map<String, dynamic> data = readJSONSync(File(pathSyntax))!;
+  Map<String, dynamic> colors = readJSONSync(File(pathColors));
+  Map<String, dynamic> data = readJSONSync(File(pathSyntax));
   Map<String, String> favColors = {
     "blue": "Dodger Blue",
     "teal": "Strong Blue",
@@ -25,8 +25,11 @@ void runSentence() {
   group('Sentence', () {
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
-    final mod = TextModifier('');
-    mod.addAction(data, colors, mapColorFav: favColors);
+    late TextModifier<String> mod;
+    setUpAll(() {
+      mod = TextModifier('');
+      mod.addAction(data, colors, mapColorFav: favColors);
+    });
 
     /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 

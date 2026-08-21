@@ -18,8 +18,8 @@ void runTextModifier() {
 
   final String pathSyntax = 'assets/syntax.json';
   final String pathColors = 'assets/colors.json';
-  Map<String, dynamic> colors = readJSONSync(File(pathColors))!;
-  Map<String, dynamic> data = readJSONSync(File(pathSyntax))!;
+  Map<String, dynamic> colors = readJSONSync(File(pathColors));
+  Map<String, dynamic> data = readJSONSync(File(pathSyntax));
 
   /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
@@ -69,7 +69,7 @@ void runTextModifier() {
         modStr.act.applySyntaxCommands(['tab']).result,
         'abc [ [list Text] a] abc',
       );
-      expect(modStr.linkPinyin().result, 'abc [ [list Text] a] abc');
+      expect(modStr.act.linkPinyin().result, 'abc [ [list Text] a] abc');
       expect(modStr.set('abc [ [a1a3]]').convertPinyin().result, 'abc [ [āǎ]]');
 
       expect(modList.convertPinyin().result, ['[āá]', 'ba4', '[chī]']);
@@ -93,8 +93,8 @@ void runTextAction() {
     final String pathSyntax = 'assets/syntax.json';
     final String pathColors = 'assets/colors.json';
 
-    Map<String, dynamic> colors = readJSONSync(File(pathColors))!;
-    Map<String, dynamic> data = readJSONSync(File(pathSyntax))!;
+    Map<String, dynamic> colors = readJSONSync(File(pathColors));
+    Map<String, dynamic> data = readJSONSync(File(pathSyntax));
     Map<String, dynamic>? dataAsync;
 
     setUp(() async {

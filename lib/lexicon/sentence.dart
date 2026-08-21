@@ -20,11 +20,12 @@ class Sentence {
     required this.mod,
   }) {
     _text = text;
-    _text = mod.set(_text).toCleanLanguage('chinese').result;
+    _text = mod.set(_text).removeSyntax().toCleanLanguage('chinese').result;
 
     _pinyin = pinyin;
     _pinyin = mod
         .set(_pinyin)
+        .removeSyntax()
         .toCleanLanguage('english')
         .toNumericPinyin()
         .result;

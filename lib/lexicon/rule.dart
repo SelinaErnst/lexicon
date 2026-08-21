@@ -4,12 +4,15 @@ import 'character.dart';
 import 'dictionary.dart';
 import 'text_modifier.dart';
 import 'utils.dart';
+import 'package:logging/logging.dart';
 
-final modifier = TextModifier('');
+final Logger _log = Logger('RuleLog');
+
+late TextModifier<String> modifier;
 
 final Set<String> _idMethods = {'shorten', 'hash'}; // uniqueID : method
 
-class Rule extends Character {
+class Rule extends Character with CopyEngine<Rule> {
   String level;
   String title;
   String subtitle;
@@ -21,63 +24,52 @@ class Rule extends Character {
   Dictionary characters;
   Dictionary charactersOpp;
 
-  // @override
-  // List<String> get _identifiers => const ['level', 'title', 'subtitle'];
-  // @override
-  final List<String> _identifiers = ['level', 'title', 'subtitle'];
-  List<String> get baseCategories => _identifiers;
+  @override
+  bool get strict => true;
 
-  Rule._internal({
-    required String level,
-    required String title,
-    required String subtitle,
-    required String explanation,
-    required List<String> tags,
-    required List<String> structures,
-    required List<String> structuresOpp,
-    required List<Sentence> sentences,
-    required Dictionary characters,
-    required Dictionary charactersOpp,
-    super.specs,
-  }) : level = level,
-       title = title,
-       subtitle = subtitle,
-       explanation = explanation,
-       tags = tags,
-       structures = structures,
-       structuresOpp = structuresOpp,
-       sentences = sentences,
-       characters = characters,
-       charactersOpp = charactersOpp,
-       super(
-         entry: {
-           'level': level,
-           'title': title,
-           'subtitle': subtitle,
-           'explanation': explanation,
-           'tags': tags,
-           'structures': structures,
-           'structuresOpp': structuresOpp,
-           'sentences': sentences,
-           'characters': characters,
-           'charactersOpp': charactersOpp,
-         },
-       );
+  @override
+  List<String> get baseCategories => ['level', 'title', 'subtitle'];
+
+  Rule._internal({required Map<String, dynamic> entry, super.specs})
+    : level = entry['level'] is String ? entry['level'].toString().trim() : '',
+      title = entry['title'] is String ? entry['title'].toString().trim() : '',
+      subtitle = entry['subtitle'] is String
+          ? entry['subtitle'].toString().trim()
+          : '',
+      explanation = entry['explanation'] is String
+          ? entry['explanation'].toString().trim()
+          : '',
+      tags = entry['tags'] is List ? List.from(entry['tags'] as List) : [],
+      structures = entry['structures'] is List
+          ? List.from(entry['structures'] as List)
+          : [],
+      structuresOpp = entry['structuresOpp'] is List
+          ? List.from(entry['structuresOpp'] as List)
+          : [],
+      sentences = entry['sentences'] is List
+          ? _listSentences(List.from(entry['sentences'] as List))
+          : [],
+      characters = Dictionary(characters: entry['characters']),
+      charactersOpp = Dictionary(characters: entry['charactersOpp']) {
+    update({
+      'level': level,
+      'title': title,
+      'subtitle': subtitle,
+      'explanation': explanation,
+      'tags': tags,
+      'structures': structures,
+      'structuresOpp': structuresOpp,
+      'sentences': sentences,
+      'characters': characters,
+      'charactersOpp': charactersOpp,
+    });
+  }
 
   factory Rule({
-    String level = '',
-    String title = '',
-    String subtitle = '',
-    String explanation = '',
-    List<String> tags = const [],
-    List<String> structures = const [],
-    List<String> structuresOpp = const [],
-    List<dynamic>? sentences,
-    List<dynamic>? characters,
-    List<dynamic>? charactersOpp,
+    Map<String, dynamic> entry = const {},
     TextModifier<String>? mod,
   }) {
-    final Map<String, Type> categories = {
+    final Map<String, Type> ruleCat = {
       'level': String,
       'title': String,
       'subtitle': String,
@@ -89,47 +81,34 @@ class Rule extends Character {
       'characters': Dictionary,
       'charactersOpp': Dictionary,
     };
-    return Rule._internal(
-      level: level.trim(),
-      title: title.trim(),
-      subtitle: subtitle.trim(),
-      explanation: explanation.trim(),
-      tags: List.from(tags),
-      structures: List.from(structures),
-      structuresOpp: List.from(structuresOpp),
-      sentences: _listSentences(sentences, mod: mod),
-      characters: Dictionary(characters: characters),
-      charactersOpp: Dictionary(characters: charactersOpp),
-      specs: categories,
-    );
+    _log.info('factory init of Rule');
+    modifier = mod ?? TextModifier('');
+    return Rule._internal(entry: entry, specs: ruleCat);
   }
 
-  static List<Sentence> _listSentences(
-    List<dynamic>? rawSentences, {
-    TextModifier<String>? mod,
-  }) {
-    List<Sentence> sentenceList = [];
-    if (rawSentences == null) return sentenceList;
-    try {
-      rawSentences = List<Sentence>.from(rawSentences);
-      sentenceList = rawSentences
-          .whereType<Sentence>()
-          .toSet()
-          .where((sts) => !sts.isEmpty)
-          .toList();
-    } catch (e) {
-      for (final item in rawSentences!) {
-        final stsMap = item as Map<String, dynamic>;
-        final sts = Sentence(
-          mod: mod ?? modifier,
-          text: stsMap['text'] as String? ?? '',
-          pinyin: stsMap['pinyin'] as String? ?? '',
-          translation: stsMap['translation'] as String? ?? '',
-        );
-        if (!sts.isEmpty) sentenceList.add(sts);
-      }
-    }
-    return sentenceList;
+  static List<Sentence> _listSentences(List<dynamic>? rawSentences) {
+    if (rawSentences == null) return [];
+
+    return rawSentences
+        .map((item) {
+          if (item is Sentence) return item;
+          if (item is Map<String, String>) {
+            String text = item['text'] ?? '';
+            String pinyin = item['pinyin'] ?? '';
+            String translation = item['translation'] ?? '';
+            return Sentence(
+              text: text,
+              pinyin: pinyin,
+              translation: translation,
+              mod: modifier,
+            );
+          }
+          return null;
+        })
+        .whereType<Sentence>()
+        .toSet()
+        .where((s) => !s.isEmpty)
+        .toList();
   }
 
   @override
@@ -139,30 +118,27 @@ class Rule extends Character {
 
   @override
   Rule copy() {
-    return Rule(
-      level: level,
-      title: title,
-      subtitle: subtitle,
-      tags: List<String>.from(tags),
-      structures: List<String>.from(structures),
-      structuresOpp: List<String>.from(structuresOpp),
-      sentences: List<Sentence>.from(sentences),
-      characters: List<Character>.from(characters.characters),
-      charactersOpp: List<Character>.from(charactersOpp.characters),
-    );
+    return Rule(entry: data.deepCopy());
   }
 
   @override
-  Character createInstance({
-    Map<String, Type>? specs,
+  Rule createInstance({
     Map<String, dynamic>? entry,
+    Map<String, Type>? specs,
+    List<String>? baseCategories,
   }) {
-    throw UnsupportedError('createInstance() is not available for Rule.');
+    if (baseCategories != null)
+      _log.fine('Cannot change baseCategories of Rule.');
+    final init = Rule._internal(
+      entry: entry ?? data.deepCopy(),
+      specs: categories,
+    );
+    return init;
   }
 
   @override
-  Character copyWith({Map<String, Type>? specs, Map<String, dynamic>? entry}) {
-    throw UnsupportedError('copyWith() is not available for Rule.');
+  Rule reconfigure({Map<String, Type>? specs, List<String>? baseCategories}) {
+    throw UnsupportedError('reconfigure() is not available for Rule.');
   }
 
   void clear() {
@@ -178,30 +154,37 @@ class Rule extends Character {
   }
 
   @override
-  void set(String category, value, {bool force = true}) {
+  void set(String category, value, {bool force = false}) {
     if (value == null) {
       throw ArgumentError('Value for "$category" cannot be null');
     }
-    super.set(category, value, force: force);
+    if (force) {
+      _log.finer(
+        'Rule was set to force reset of category values. This option is deprecated.',
+      );
+    }
+
+    super.set(category, value, force: false);
     if (sameTypes(categories[category]!, data[category].runtimeType)) {
-      if (category == 'level') {
-        level = data[category] as String;
-      } else if (category == 'title') {
-        title = data[category] as String;
-      } else if (category == 'subtitle') {
-        subtitle = data[category] as String;
-      } else if (category == 'tags') {
-        tags = data[category] as List<String>;
-      } else if (category == 'structures') {
-        structures = data[category] as List<String>;
-      } else if (category == 'structuresOpp') {
-        structuresOpp = data[category] as List<String>;
-      } else if (category == 'sentences') {
-        sentences = data[category] as List<Sentence>;
-      } else if (category == 'characters') {
-        characters = data[category] as Dictionary;
-      } else if (category == 'charactersOpp') {
-        charactersOpp = data[category] as Dictionary;
+      final dataValue = data[category];
+      if (category == 'level' && dataValue is String) {
+        level = dataValue;
+      } else if (category == 'title' && dataValue is String) {
+        title = dataValue;
+      } else if (category == 'subtitle' && dataValue is String) {
+        subtitle = dataValue;
+      } else if (category == 'tags' && dataValue is List<String>) {
+        tags = dataValue;
+      } else if (category == 'structures' && dataValue is List<String>) {
+        structures = dataValue;
+      } else if (category == 'structuresOpp' && dataValue is List<String>) {
+        structuresOpp = dataValue;
+      } else if (category == 'sentences' && dataValue is List<Sentence>) {
+        sentences = dataValue;
+      } else if (category == 'characters' && dataValue is Dictionary) {
+        characters = dataValue;
+      } else if (category == 'charactersOpp' && dataValue is Dictionary) {
+        charactersOpp = dataValue;
       }
     }
   }
@@ -291,7 +274,7 @@ class Rule extends Character {
         combined['strucures_opp'] = combined['structuresOpp'];
         combined['explanation'] = TextModifier(
           combined['explanation'] as String,
-        ).linkPinyin();
+        ).act.linkPinyin();
         combined['sentences'] = combined['sentences'].map((Sentence sentence) {
           return sentence.applySyntax();
         }).toList();

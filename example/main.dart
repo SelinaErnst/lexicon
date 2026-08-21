@@ -4,17 +4,24 @@ import 'dart:io';
 
 void main() async {
   /* ––––––––––––––––––––––––– config files ––––––––––––––––––––––––– */
-  final synatxMap = readJSONSync(File('assets/syntax.json'))!;
-  final colorMap = readJSONSync(File('assets/colors.json'))!;
-  final catMap = readJSONSync(File('assets/categories.json'))!;
+  final synatxMap = readJSONSync<Map<String, dynamic>>(
+    File('assets/syntax.json'),
+  );
+  final colorMap = readJSONSync<Map<String, dynamic>>(
+    File('assets/colors.json'),
+  );
+  final catMap = readJSONSync<Map<String, dynamic>>(
+    File('assets/categories.json'),
+  );
   /* ––––––––––––––––––––––––– config files ––––––––––––––––––––––––– */
 
   /* –––––––––––––––––––––––– dictionary init ––––––––––––––––––––––– */
-  Dictionary dictionary = Dictionary();
+  Dictionary dictionary = ChDictionary();
   dictionary.addSyntax(synatxMap, colorMap);
   await dictionary.read(File('assets/MCD.jsonl'), categories: catMap);
   /* –––––––––––––––––––––––– dictionary init ––––––––––––––––––––––– */
 
-  print(dictionary[List.generate(10, (index) => index)]);
-  dictionary['ri4'][0].info();
+  // print(dictionary.getSubset(List.generate(10, (index) => index)));
+  // print(dictionary.getCharacter(['八','','ba1']));
+  // print(dictionary.getCharacter(Character()));
 }

@@ -9,7 +9,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:path/path.dart' as p;
 
-final Logger _log = Logger('DictionaryEngine');
+final Logger _log = Logger('DictionaryLog');
 
 /* ================================================================ */
 /*                           CONFIGURATION                          */
@@ -28,6 +28,12 @@ const Map<String, Set<String>> _extOptions = {
   '.db': {'db', '.db', 'sql', 'base', 'all'},
 };
 final Set<String> _expOptions = _extOptions.values.expand((set) => set).toSet();
+
+/* ================================================================ */
+/*                         SUBSETTING ENGINE                        */
+/* ================================================================ */
+
+// mixin SubsetEngine<C extends Character, T extends Dictionary<C>> on Dictionary<C> {}
 
 /* ================================================================ */
 /*                              HELPERS                             */
@@ -61,24 +67,30 @@ class Dictionary extends Iterable<Character> {
   late Map<String, dynamic>? _mapColor;
   late Map<String, dynamic>? _mapColorFav;
 
-  late Map<String, Type> categories;
+  Map<String, Type> _categories = {};
+
+  /* ================================================================ */
+  /*                          IMPLEMENTATION                          */
+  /* ================================================================ */
 
   Dictionary({
     String? name,
     dynamic characters,
     dynamic rules,
-    Map<String, Type>? categories,
+    Map<String, Type> categories = const {},
     String? sortingKey,
     String? sortingOrd,
   }) : name = name ?? '' {
-    _setCharacters(characters);
-    _setRules(rules);
-
-    this.categories = categories ?? {};
+    this.categories = categories;
     _sortKey = sortingKey ?? '';
     _sortOrd = sortingOrd ?? '';
-
+    _setCharacters(characters);
+    _setRules(rules);
     sort();
+
+    _log.info(
+      'Successfully created: Dict <$name>: ${this.characters.length} (depth)',
+    );
   }
 
   @protected
@@ -90,11 +102,14 @@ class Dictionary extends Iterable<Character> {
     String? sortingKey,
     String? sortingOrd,
   }) {
+    _log.finer(
+      'Create instance of Dictionary $_headString with other characters.',
+    );
     return Dictionary(
-      name: name ?? '',
+      name: name ?? this.name,
       characters: characters,
-      rules: rules,
-      categories: categories ?? {},
+      rules: rules ?? this.rules.map((rule) => rule.copy()).toList(),
+      categories: categories ?? Map<String, Type>.from(_categories),
       sortingKey: sortingKey ?? _sortKey,
       sortingOrd: sortingOrd ?? _sortOrd,
     );
@@ -106,42 +121,48 @@ class Dictionary extends Iterable<Character> {
   }
 
   Dictionary copy() {
+    _log.finest('Copy Dictionary $_headString.');
     return createInstance(
-      name: name,
-      characters: characters.map((char) => char.copy()).toList(),
-      rules: rules.map((rule) => rule.copy()).toList(),
-      categories: Map<String, Type>.from(categories),
-      sortingKey: _sortKey,
-      sortingOrd: _sortOrd,
+      characters: characters.map((char) => char.createInstance()).toList(),
     );
   }
 
-  Dictionary copyWith({
-    String? name,
-    dynamic characters,
-    dynamic rules,
-    Map<String, Type>? categories,
-    String? sortingKey,
-    String? sortingOrd,
-  }) {
+  Dictionary copyWith({String? name, Map<String, Type>? categories}) {
+    _log.finest('Copy Dictionary $_headString with different configuration.');
     return createInstance(
       name: name ?? this.name,
-      characters:
-          characters ?? this.characters.map((char) => char.copy()).toList(),
-      rules: rules ?? this.rules.map((rule) => rule.copy()).toList(),
-      categories: categories ?? Map<String, Type>.from(this.categories),
-      sortingKey: sortingKey ?? _sortKey,
-      sortingOrd: sortingOrd ?? _sortOrd,
+      categories: categories ?? Map<String, Type>.from(_categories),
+      characters: characters.map((char) => char.createInstance()).toList(),
     );
   }
 
   Dictionary empty({bool keepRules = true}) {
+    _log.fine('Empty Dictionary $_headString of all characters.');
     _characters = [];
-    if (!keepRules) _rules = [];
+    if (!keepRules) {
+      _log.fine('Empty Dictionary $_headString of all rules.');
+      _rules = [];
+    }
     return this;
   }
 
+  Map<String, Type> get categories => Map.unmodifiable(_categories);
+
+  set categories(Map<String, dynamic> newCategories) {
+    _log.info('Set categories to: ${newCategories.keys.join(', ')}');
+    _categories = newCategories.map((key, value) {
+      if (value is String && _mapTypes.containsKey(value)) {
+        return MapEntry(key, _mapTypes[value] as Type);
+      }
+      if (value is Type) {
+        return MapEntry(key, value);
+      }
+      return MapEntry(key, dynamic);
+    });
+  }
+
   List<Character> get characters => _characters;
+
   set characters(dynamic value) {
     _setCharacters(value);
     sort();
@@ -174,14 +195,17 @@ class Dictionary extends Iterable<Character> {
     } else {
       _characters = [];
     }
+    _log.fine('Create Character List of Dictionary $_headString.');
   }
 
   List<Rule> get rules => _rules;
+
   set rules(dynamic value) {
     _setRules(value);
   }
 
   void _setRules(dynamic ruleList) {
+    _log.fine('Create Rule List of Dictionary $_headString.');
     if (ruleList is List) {
       _rules = ruleList
           .whereType<Rule>()
@@ -201,9 +225,11 @@ class Dictionary extends Iterable<Character> {
 
   /* ––––––––––––––––––– operators / magic methods –––––––––––––––––– */
 
+  String get _headString => 'Dict <$name>: ${characters.length} (depth)';
+
   @override
   String toString() {
-    final header = 'Dict <$name>: ${characters.length} (depth)';
+    final header = _headString;
     if (characters.isEmpty) return header;
 
     final buffer = StringBuffer('$header\n');
@@ -234,68 +260,44 @@ class Dictionary extends Iterable<Character> {
 
   @override
   bool operator ==(Object other) {
+    _log.finer('Compare Dictionary $_headString to ${other.runtimeType}');
     if (identical(this, other)) return true;
     if (other is! Dictionary) return false;
+    _log.finest(
+      'Compare Dictionary $_headString to other Dictionary ${other._headString}',
+    );
     const charEquality = UnorderedIterableEquality<Character>();
     const ruleEquality = UnorderedIterableEquality<Rule>();
-
     return name == other.name &&
         ruleEquality.equals(rules, other.rules) &&
-        charEquality.equals(characters, characters);
+        charEquality.equals(characters, other.characters);
   }
 
-  dynamic operator [](dynamic identifier) {
-    if (identifier is int) {
-      return getCharacter(identifier);
-    }
-    if (identifier is String) {
-      return getSubset(identifier);
-    }
-    if (identifier is List && identifier.length == 3) {
-      try {
-        return getCharacter(
-          convertListToType(identifier, List<String>) as List<String>,
-        );
-      } catch (e) {
-        _log.finer('');
-      }
-    }
-    if (identifier is List) {
-      return getSubset(identifier);
-    }
-
-    return null;
+  Character? operator [](dynamic identifier) {
+    return getCharacter(identifier);
   }
 
-  Dictionary? getSubset(dynamic identifier) {
+  Dictionary getSubset(List<dynamic> identifier) {
+    _log.fine('Create Subset of Dictionary $_headString.');
     final List<Character> matchingCharacters = [];
-    if (identifier is List) {
-      for (final id in identifier) {
-        final Character? char = getCharacter(id);
-        if (char != null) matchingCharacters.add(char.copy());
-      }
-    } else if (identifier is String) {
-      final List<List<String>> charactersIDList =
-          _charactersID.toList() as List<List<String>>;
-      for (final List<String> charID in charactersIDList) {
-        if (charID.contains(identifier)) {
-          final Character? char = getCharacter(charID);
-          if (char != null) matchingCharacters.add(char.copy());
-        }
-      }
+    for (final id in identifier) {
+      final Character? char = getCharacter(id);
+      if (char != null) matchingCharacters.add(char.copy());
     }
-    return copyWith(name: name, characters: matchingCharacters);
+    return createInstance(characters: matchingCharacters);
   }
 
   Character? getCharacter(dynamic identifier) {
+    _log.fine(
+      'Lookup character by identifier $identifier (Type: ${identifier.runtimeType}).',
+    );
+
     if (identifier == null) return null;
-    if (identifier is int) {
-      if (identifier >= 0 && identifier < characters.length) {
-        return characters[identifier];
-      }
+    if (identifier is int) return elementAt(identifier);
+    if (identifier is Character && contains(identifier)) {
+      return characters.firstWhere((char) => char == identifier);
     }
-    if (identifier is Character) identifier = identifier.identifier;
-    if (identifier is List) {
+    if (identifier is List<String>) {
       const listEquality = ListEquality<dynamic>();
       if (!_charactersID.containsElement(identifier)) return null;
       for (final char in characters) {
@@ -306,6 +308,7 @@ class Dictionary extends Iterable<Character> {
   }
 
   Dictionary operator -(dynamic other) {
+    _log.fine('Substract from Dictionary $_headString');
     final remainCharacters = List<Character>.from(characters);
     final remainRules = List<Rule>.from(rules);
 
@@ -335,10 +338,11 @@ class Dictionary extends Iterable<Character> {
         'Subtraction Ignored: Unsupported type ${other.runtimeType}',
       );
     }
-    return copyWith(characters: remainCharacters, rules: remainRules);
+    return createInstance(characters: remainCharacters, rules: remainRules);
   }
 
   Dictionary operator +(dynamic other) {
+    _log.fine('Add to Dictionary $_headString');
     final comboCharacters = List<Character>.from(characters);
     final comboRules = List<Rule>.from(rules);
 
@@ -381,13 +385,19 @@ class Dictionary extends Iterable<Character> {
         }
       }
     } else {
-      _log.warning('Addition Ignored: Unsupported type ${other.runtimeType}');
+      _log.warning('Addition Failed: Unsupported type ${other.runtimeType}');
+      throw UnsupportedError(
+        'Addition is not supported for type ${other.runtimeType}',
+      );
     }
-    return copyWith(characters: comboCharacters, rules: comboRules);
+    return createInstance(characters: comboCharacters, rules: comboRules);
   }
 
   Dictionary add(dynamic other) {
+    _log.fine('Add to Dictionary $_headString');
     // adds to current dictionary
+    // but without creating a new instance and without sorting
+
     final Set<dynamic> charactersIDSet = _charactersID;
     final Set<Rule> rulesIDSet = rules.toSet();
 
@@ -443,6 +453,7 @@ class Dictionary extends Iterable<Character> {
   String get sortingOrd => _sortOrd;
 
   set sortingKey(String key) {
+    _log.config('Set sorting key to $key');
     key = key.toLowerCase();
     isValid(key, _sortKeys, funcName: 'sortingKey', argName: 'key');
     _sortKey = key;
@@ -450,6 +461,7 @@ class Dictionary extends Iterable<Character> {
   }
 
   set sortingOrd(String order) {
+    _log.config('Set sorting order to $order');
     order = order.toLowerCase();
     isValid(order, _sortOrder, funcName: 'sortingOrd', argName: 'order');
     _sortOrd = order;
@@ -458,6 +470,9 @@ class Dictionary extends Iterable<Character> {
 
   Dictionary sort({String? sortingKey, String? sortingOrd}) {
     if (sortingKey != null && sortingOrd != null) {
+      _log.fine(
+        'Sorting the Dictionary $_headString based on key "$sortingKey", and order "$sortingOrd".',
+      );
       characters.sort((firstChar, secondChar) {
         final first = firstChar[sortingKey] as String;
         final second = secondChar[sortingKey] as String;
@@ -489,7 +504,7 @@ class Dictionary extends Iterable<Character> {
 
   Dictionary searchCategory({
     String pattern = "",
-    String category = "",
+    List<String> categories = const [],
     bool exact = true,
   }) {
     bool contentContains(String pattern, String content) {
@@ -533,13 +548,15 @@ class Dictionary extends Iterable<Character> {
       return false;
     }
 
-    _log.finer('Search dictionary category "$category" for pattern: $pattern');
+    _log.finer(
+      'Search dictionary categories "$categories" for pattern: $pattern',
+    );
 
     final matches = _characters
-        .where((Character char) => categoryContains(pattern, category, char))
+        .where((Character char) => categoryContains(pattern, categories, char))
         .toList();
 
-    return copyWith(characters: matches);
+    return createInstance(characters: matches);
   }
 
   /* ================================================================ */
@@ -556,6 +573,23 @@ class Dictionary extends Iterable<Character> {
   /* ================================================================ */
   /*                            READ ASYNC                            */
   /* ================================================================ */
+
+  Character _listItem({
+    Map<String, Type> specs = const {},
+    Map<String, dynamic> entry = const {},
+  }) {
+    return Character(
+      specs: specs,
+      entry: entry,
+      mapSyntax: _mapSyntax,
+      mapColor: _mapColor,
+      mapColorFav: _mapColorFav,
+    );
+  }
+
+  Map<String, dynamic> _updateEntry(Map<String, dynamic> entry) {
+    return entry;
+  }
 
   void addSyntax(
     Map<String, dynamic> mapSyntax,
@@ -575,18 +609,7 @@ class Dictionary extends Iterable<Character> {
     String? name,
     String? template,
   }) async {
-    Map<String, Type> catTypeMap = {};
-    if (categories != null) {
-      catTypeMap = categories.map((key, value) {
-        if (value is String && _mapTypes.containsKey(value)) {
-          return MapEntry(key, _mapTypes[value] as Type);
-        }
-        if (value is Type) {
-          return MapEntry(key, value);
-        }
-        return MapEntry(key, dynamic);
-      });
-    }
+    if (categories != null) this.categories = categories;
 
     String directory = getDirectory(file);
     String filename = getFileName(file);
@@ -609,20 +632,20 @@ class Dictionary extends Iterable<Character> {
       '.txt' => await () async {
         return await _readTXT(
           targetFile,
-          categories: catTypeMap,
+          categories: this.categories,
           template: template ?? '',
           add: add,
         );
       }(),
       '.jsonl' => await _readJSONL(
         targetFile,
-        categories: catTypeMap,
+        categories: this.categories,
         add: add,
       ),
       '.db' => await () async {
         return await _readDB(
           targetFile,
-          categories: catTypeMap,
+          categories: this.categories,
           name: name,
           add: add,
         );
@@ -654,19 +677,9 @@ class Dictionary extends Iterable<Character> {
       for (String line in lines) {
         if (line.trim().isEmpty) continue;
         Map<String, dynamic> entry = json.decode(line) as Map<String, dynamic>;
-        // entry['simplified']
-        if (entry.containsKey('simple')) entry['simplified'] = entry['simple'];
-        if (entry.containsKey('pronunciation')) {
-          entry['pinyin'] = entry['pronunciation'];
-        }
-        ChCharacter char = ChCharacter(
-          specs: categories,
-          entry: entry,
-          mapSyntax: _mapSyntax,
-          mapColor: _mapColor,
-          mapColorFav: _mapColorFav,
+        jsonlCharacters.add(
+          _listItem(specs: categories, entry: _updateEntry(entry)),
         );
-        jsonlCharacters.add(char);
       }
       _setCharacters(jsonlCharacters);
       sort();
@@ -711,10 +724,10 @@ class ChDictionary extends Dictionary {
     String? sortingOrd,
   }) {
     return ChDictionary(
-      name: name ?? '',
+      name: name ?? this.name,
       characters: characters,
-      rules: rules,
-      categories: categories ?? {},
+      rules: rules ?? this.rules.map((rule) => rule.copy()).toList(),
+      categories: categories ?? Map<String, Type>.from(_categories),
       sortingKey: sortingKey ?? _sortKey,
       sortingOrd: sortingOrd ?? _sortOrd,
     );
@@ -782,11 +795,15 @@ class ChDictionary extends Dictionary {
 
   Dictionary search({
     String pattern = "",
-    String category = "",
+    List<String> categories = const [],
     bool exact = true,
   }) {
-    if (category.isNotEmpty) {
-      return searchCategory(pattern: pattern, category: category, exact: exact);
+    if (categories.isNotEmpty) {
+      return searchCategory(
+        pattern: pattern,
+        categories: categories,
+        exact: exact,
+      );
     }
 
     List<String> getPinyinOptions(String pinyin) {
@@ -836,6 +853,33 @@ class ChDictionary extends Dictionary {
         .where((ChCharacter char) => isMatch(char, listPattern))
         .toList();
 
-    return copyWith(characters: matches);
+    return createInstance(characters: matches);
+  }
+
+  /* ================================================================ */
+  /*                               READ                               */
+  /* ================================================================ */
+
+  @override
+  Character _listItem({
+    Map<String, Type> specs = const {},
+    Map<String, dynamic> entry = const {},
+  }) {
+    return ChCharacter(
+      specs: specs,
+      entry: entry,
+      mapSyntax: _mapSyntax,
+      mapColor: _mapColor,
+      mapColorFav: _mapColorFav,
+    );
+  }
+
+  @override
+  Map<String, dynamic> _updateEntry(Map<String, dynamic> entry) {
+    if (entry.containsKey('simple')) entry['simplified'] = entry['simple'];
+    if (entry.containsKey('pronunciation')) {
+      entry['pinyin'] = entry['pronunciation'];
+    }
+    return entry;
   }
 }

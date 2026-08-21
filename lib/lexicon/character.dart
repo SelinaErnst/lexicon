@@ -1,11 +1,10 @@
 import 'package:logging/logging.dart';
-import 'package:meta/meta.dart';
 import 'package:collection/collection.dart';
 import 'text_modifier.dart';
 import 'utils.dart';
 import 'dictionary.dart';
 
-final Logger _log = Logger('CharacterEngine');
+final Logger _log = Logger('CharacterLog');
 
 /* ================================================================ */
 /*                           CONFIGURATION                          */
@@ -18,28 +17,53 @@ final Set<String> _idMethods = {
 }; // uniqueID : method
 
 /* ================================================================ */
+/*                       THE MIXIN COPY ENGINE                      */
+/* ================================================================ */
+
+mixin CopyEngine<T extends Character> on Character {
+  // redefine the resulting Type of
+
+  @override
+  T createInstance({
+    Map<String, Type>? specs,
+    Map<String, dynamic>? entry,
+    List<String>? baseCategories,
+  });
+
+  @override
+  T copy() {
+    return createInstance();
+  }
+
+  @override
+  T reconfigure({Map<String, Type>? specs, List<String>? baseCategories}) {
+    return createInstance(specs: specs, baseCategories: baseCategories);
+  }
+
+  @override
+  T copyWith(Map<String, dynamic> updates, {bool merge = false}) {
+    return createInstance(entry: _updateDataWith(updates, merge: merge));
+  }
+}
+
+/* ================================================================ */
 /*                          IMPLEMENTATION                          */
 /* ================================================================ */
 
 class Character {
-  final Map<String, Type> categories;
+  late final Map<String, Type> categories;
   final Map<String, dynamic> data = {};
+  final bool strict;
 
-  final TextModifier _modString = TextModifier<String>('');
-  final TextModifier _modList = TextModifier<List<String>>(['']);
+  final TextModifier<String> _modString = TextModifier('');
 
-  List<String> get _identifiers {
-    if (categories.isNotEmpty) return categories.keys.toList();
-    return [];
-  }
+  Map<String, dynamic>? _mapSyntax;
+  Map<String, dynamic>? _mapColor;
+  Map<String, dynamic>? _mapColorFav;
 
-  void setSyntax(
-    Map<String, dynamic> mapSyntax,
-    Map<String, dynamic> mapColor, {
-    Map<String, dynamic>? mapColorFav,
-  }) {
-    _modString.addAction(mapSyntax, mapColor, mapColorFav: mapColorFav);
-  }
+  final List<String> baseCategories;
+
+  // List<String> get baseCategories => _identifiers;
 
   /* ================================================================ */
   /*                            CONSTRUCTOR                           */
@@ -48,18 +72,30 @@ class Character {
   Character({
     Map<String, Type> specs = const {},
     Map<String, dynamic> entry = const {},
+    this.strict = true, // default for all subclasses
+    this.baseCategories = const [],
     Map<String, dynamic>? mapSyntax,
     Map<String, dynamic>? mapColor,
     Map<String, dynamic>? mapColorFav,
-  }) : categories = {} {
+  }) {
+    Map<String, Type> finalCategories = {};
     if (mapColor != null && mapSyntax != null) {
-      setSyntax(mapSyntax, mapColor, mapColorFav: mapColorFav);
+      addSyntax(mapSyntax, mapColor, mapColorFav: mapColorFav);
     }
 
-    categories.addAll({for (final category in _identifiers) category: String});
-    categories.addAll(specs);
-    categories.forEach((category, type) {
-      if (_identifiers.contains(category)) {
+    finalCategories.addAll({
+      for (final category in baseCategories) category: String,
+    });
+    finalCategories.addAll(specs);
+
+    if (strict) {
+      categories = Map.unmodifiable(finalCategories);
+    } else {
+      categories = finalCategories;
+    }
+
+    finalCategories.forEach((category, type) {
+      if (baseCategories.contains(category) && type == String) {
         data[category] = '';
       } else {
         data[category] = null;
@@ -70,43 +106,94 @@ class Character {
       set(category, value);
     });
 
-    for (final idKey in _identifiers) {
+    for (final idKey in baseCategories) {
       final value = data[idKey];
       if (value == null) {
-        _log.severe(
-          'Integrity Breach: Core identifier "$idKey" cannot be missing or empty!',
-        );
+        _log.shout('Value of baseCategory "$idKey" cannot be null.');
         throw ArgumentError(
           'Mandatory field missing: Each character entry requires a valid $idKey string.',
         );
       }
     }
 
-    _log.info('Initial character: ${toString()}');
+    _log.info('Successfully created character: ${toString()}');
   }
 
   /* ––––––––––––––––––––––––––––– copy ––––––––––––––––––––––––––––– */
 
-  @protected
   Character createInstance({
     Map<String, Type>? specs,
     Map<String, dynamic>? entry,
+    List<String>? baseCategories,
   }) {
-    return Character(specs: specs ?? {}, entry: entry ?? {});
+    _log.finer('Create instance of Character with different entry.');
+    if (_hasSyntax) {
+      return Character(
+        specs: specs ?? Map<String, Type>.from(categories),
+        entry: entry ?? data.deepCopy(),
+        baseCategories: baseCategories ?? this.baseCategories,
+        strict: strict,
+        mapSyntax: _mapSyntax,
+        mapColor: _mapColor,
+        mapColorFav: _mapColorFav,
+      );
+    }
+    _log.finest('Instance is missing syntax maps.');
+    return Character(
+      specs: specs ?? Map<String, Type>.from(categories),
+      entry: entry ?? data.deepCopy(),
+      strict: strict,
+      baseCategories: baseCategories ?? this.baseCategories,
+    );
   }
 
   Character copy() {
-    return createInstance(
+    _log.finest('Copy Character ${toString()}.');
+    return createInstance();
+  }
+
+  Character reconfigure({
+    Map<String, Type>? specs,
+    List<String>? baseCategories,
+  }) {
+    _log.finest('Copy Character ${toString()} with different configuration.');
+    return createInstance(specs: specs, baseCategories: baseCategories);
+  }
+
+  Character copyWith(Map<String, dynamic> updates, {bool merge = false}) {
+    _log.finest('Update Character ${toString()} with $updates.');
+    return createInstance(entry: _updateDataWith(updates, merge: merge));
+  }
+
+  Character _changeStrictness(bool strict) {
+    _log.finer('Change Character strictness to $strict.');
+
+    if (_hasSyntax) {
+      return Character(
+        specs: Map<String, Type>.from(categories),
+        entry: data.deepCopy(),
+        strict: strict,
+        baseCategories: baseCategories,
+        mapSyntax: _mapSyntax,
+        mapColor: _mapColor,
+        mapColorFav: _mapColorFav,
+      );
+    }
+    _log.finest('Syntax maps are missing.');
+    return Character(
       specs: Map<String, Type>.from(categories),
       entry: data.deepCopy(),
+      strict: strict,
+      baseCategories: baseCategories,
     );
   }
 
-  Character copyWith({Map<String, Type>? specs, Map<String, dynamic>? entry}) {
-    return createInstance(
-      specs: specs ?? Map<String, Type>.from(categories),
-      entry: entry == null ? data.deepCopy() : (data.deepCopy()..addAll(entry)),
-    );
+  Character relax() {
+    return _changeStrictness(false);
+  }
+
+  Character restrict() {
+    return _changeStrictness(true);
   }
 
   /* ================================================================ */
@@ -115,29 +202,37 @@ class Character {
 
   /* –––––––––––––––––––– operator (magic method) ––––––––––––––––––– */
   Dictionary operator +(dynamic other) {
+    _log.fine('Addition of Character and ${other.runtimeType}.');
     final comboCategories = Map<String, Type>.from(categories);
-    final List<Character> comboCharacters = [copy()];
+    final List<Character> comboCharacters = [createInstance()];
 
     if (other is Character && !other.isEmpty && this != other) {
-      comboCharacters.add(other.copy());
+      comboCharacters.add(other.createInstance());
     } else if (other is Dictionary) {
       return other.copyWith(categories: comboCategories) + this;
     } else {
-      _log.warning('Addition Ignored: Unsupported type ${other.runtimeType}');
+      _log.warning('Addition Failed: Unsupported type ${other.runtimeType}');
+      throw UnsupportedError(
+        'Addition is not supported for type ${other.runtimeType}',
+      );
     }
     return Dictionary(categories: comboCategories, characters: comboCharacters);
   }
 
   dynamic operator [](String category) {
+    _log.finest('Lookup value of category "$category".');
     // different from get which can return null instead of error
     if (!categories.containsKey(category)) {
+      _log.shout(
+        'Category "$category" does not exist in predefined categories.',
+      );
       throw ArgumentError('Category "$category" does not exist.');
     }
     return data[category];
   }
 
   void operator []=(String category, dynamic value) {
-    set(category, value);
+    set(category, value, force: !strict);
   }
 
   @override
@@ -157,7 +252,7 @@ class Character {
 
   @override
   String toString() {
-    List<String> values = [for (String i in _identifiers) data[i] as String];
+    List<String> values = [for (var i in baseCategories) data[i].toString()];
     String repr = values.join(' | ');
     return '〔 $repr 〕';
   }
@@ -168,6 +263,7 @@ class Character {
 
   @override
   bool operator ==(Object other) {
+    _log.finest('Compare Character ${toString()} to ${other.toString()}');
     if (identical(this, other)) return true;
     if (other is! Character) return false;
     return const ListEquality<String>().equals(identifier, other.identifier);
@@ -177,6 +273,9 @@ class Character {
 
   bool exact(Character other, {bool ignoreNull = false}) {
     if (this != other) return false;
+    _log.fine(
+      'Compare exact Character data of ${toString()} and ${other.toString()}',
+    );
     if (ignoreNull) {
       final Map<String, dynamic> cleanThis = Map.from(data)
         ..removeWhere((category, value) => value == null);
@@ -194,7 +293,7 @@ class Character {
   /* –––––––––––––––––––––––––– attributes –––––––––––––––––––––––––– */
 
   List<String> get identifier => [
-    for (String i in _identifiers) data[i] as String,
+    for (String i in baseCategories) data[i] as String,
   ];
 
   List<String> get filled {
@@ -216,6 +315,7 @@ class Character {
   /* ================================================================ */
 
   void info() {
+    _log.fine('Print all data for Character ${toString()}');
     const int width = 23;
     final String distance = ''.padRight(width);
     final String listIndent = '|${distance.substring(0, distance.length - 1)}';
@@ -277,72 +377,90 @@ class Character {
 
   void set(String category, dynamic value, {bool force = true}) {
     // force will turn off the envorcement for correct categories (with Errors)
+    _log.finest('Set value of category. ($category : $value)');
 
-    if (!categories.containsKey(category)) {
-      _log.severe('Validation Failure: Category "$category" does not exist.');
+    if (!categories.containsKey(category) && strict) {
       value = null;
+      _log.severe('Ignore Set: Category "$category" does not exist.');
       if (!force) throw ArgumentError('Category "$category" does not exist');
     } else {
-      final targetType = categories[category]!;
+      final Type targetType;
+      if (!strict) {
+        // targetType = dynamic;
+        targetType = value.runtimeType;
+        categories[category] = targetType;
+      } else {
+        targetType = categories[category] ?? Null;
+      }
+
       if (isMapType(value.runtimeType) && isMapType(targetType)) {
         final mapValue = value as Map<dynamic, dynamic>;
         value = convertMapToType(mapValue, targetType);
         data[category] = value;
-        _log.finer('Successfully updated category "$category"');
       }
 
-      if (!sameTypes(value.runtimeType, targetType) && value != null) {
+      if (!sameTypes(value.runtimeType, targetType) &&
+          value != null &&
+          strict) {
         _log.severe(
-          'Type Mismatch for "$category": Expected $targetType, got ${value.runtimeType}',
+          'Ignore Set: Type Mismatch for "$category". Expected $targetType, got ${value.runtimeType}.',
         );
         value = data[category];
         if (!force) throw TypeError();
       }
       data[category] = value;
-      _log.finer('Successfully updated category "$category"');
     }
   }
 
   void remove(String category) {
+    _log.finer('Remove category "$category" from Character $toString()');
     if (!categories.containsKey(category)) {
       _log.warning('Remove Ignored: category "$category" does not exist.');
       return;
     }
-    if (_identifiers.contains(category)) {
+    if (baseCategories.contains(category)) {
       data[category] = '';
-      _log.finer('Reset identifier value for "$category" to empty string.');
+      _log.finest('Reset identifier value for "$category" to empty string.');
     } else {
       data[category] = null;
-      _log.finer('Reset optional value for "$category" to null.');
+      _log.finest('Reset optional value for "$category" to null.');
     }
   }
 
   dynamic get(String category) {
+    _log.fine('Lookup value of category $category.');
     if (!categories.containsKey(category)) {
-      _log.warning('Get Ignored: category "$category" does not exist.');
+      _log.warning('Lookup Ignored: category "$category" does not exist.');
       return null; // Return null instead of crashing if a field doesn't exist
     }
     return data[category];
   }
 
-  Character update(Map<String, dynamic> entry) {
-    entry.forEach((category, value) {
-      try {
-        set(category, value);
-      } catch (e) {
-        // _log.warning('Type conversion or assignment failure on key "$category"');
-      }
+  void update(Map<String, dynamic> entry, {bool merge = false}) {
+    _log.fine(
+      'Update Character ${toString()} with categories: ${entry.keys.toList().join(", ")}',
+    );
+    Map<String, dynamic> updates = entry;
+    if (merge) updates = _mergeUpdates(updates);
+
+    updates.forEach((category, value) {
+      set(category, value, force: true);
     });
-    return this;
   }
 
   void updateCategoryMap(String category, Map<String, dynamic>? updates) {
+    _log.fine('Update Character category "$category" but only if its a map.');
     if (!categories.containsKey(category)) {
+      _log.shout(
+        'Cannot update because category does not exist in predefined categories.',
+      );
       throw ArgumentError('Category "$category" does not exist.');
     }
-    if (!isMapType(categories[category]!)) {
+    Type catType = categories[category] ?? Null;
+    if (!isMapType(catType)) {
+      _log.shout('Value cannot be used if not Map, actual type: $catType');
       throw ArgumentError(
-        'Category "$category" is registered as ${categories[category]}, not a Map.',
+        'Category "$category" is registered as $catType, not a Map.',
       );
     }
     if (updates == null) {
@@ -356,19 +474,97 @@ class Character {
     currentMap.addAll(updates);
     set(category, currentMap);
   }
+
+  Map<String, dynamic> _mergeUpdates(Map<String, dynamic> updates) {
+    return updates.map((key, value) {
+      if (categories.containsKey(key)) {
+        if (value is List) {
+          final dataValue = data[key] as List;
+          final after = List<dynamic>.from(dataValue);
+          after.addAll(value);
+          return MapEntry(key, after);
+        }
+        if (value is Map) {
+          final dataValue = data[key] as Map;
+          final after = {...dataValue, ...value};
+          return MapEntry(key, after);
+        }
+        return MapEntry(key, value);
+      }
+      return MapEntry(key, value);
+    });
+  }
+
+  Map<String, dynamic> _updateDataWith(
+    Map<String, dynamic> updates, {
+    bool merge = true,
+  }) {
+    _log.fine('Update data with $updates (do merge: $merge)');
+    if (merge) {
+      final merged = _mergeUpdates(updates);
+      return {...data, ...merged};
+    }
+    return Map<String, dynamic>.from(updates);
+  }
+
+  /* ================================================================ */
+  /*                              MODIFY                              */
+  /* ================================================================ */
+
+  void addSyntax(
+    Map<String, dynamic>? mapSyntax,
+    Map<String, dynamic>? mapColor, {
+    Map<String, dynamic>? mapColorFav,
+  }) {
+    if (_hasSyntax) _log.finest('Syntax will be redefined.');
+
+    _mapSyntax = mapSyntax ?? _mapSyntax;
+    _mapColor = mapColor ?? _mapColor;
+    _mapColorFav = mapColorFav ?? _mapColorFav;
+    _modString.addAction(_mapSyntax, _mapColor, mapColorFav: mapColorFav);
+    _log.info('Successfully defined syntax for Character ${toString()}.');
+  }
+
+  bool get _hasSyntax => _mapColor != null && _mapSyntax != null;
+
+  TextModifier modify(String category) {
+    _log.fine(
+      'Create TextModifier for category "$category" of Type ${get(category).runtimeType}.',
+    );
+    final input = get(category);
+    if (input is String) {
+      var modifier = TextModifier<String>(input);
+      if (_hasSyntax) {
+        modifier.addAction(_mapSyntax, _mapColor, mapColorFav: _mapColorFav);
+      }
+      return modifier;
+    }
+    if (input is List<String>) {
+      var modifier = TextModifier<List<String>>(input);
+      if (_hasSyntax) {
+        modifier.addAction(_mapSyntax, _mapColor, mapColorFav: _mapColorFav);
+      }
+      return modifier;
+    }
+    _log.shout(
+      'Cannot create TextModifier due to incorrect input type: ${get(category).runtimeType}',
+    );
+    throw ArgumentError(
+      'Values of category "$category" are not compatible with TextModifier.',
+    );
+  }
 }
 
-class ChCharacter extends Character {
+class ChCharacter extends Character with CopyEngine<ChCharacter> {
   final String _imageKey = 'images';
   final String _variantKey = 'variants';
 
   @override
-  List<String> get _identifiers => const [
+  List<String> get baseCategories => const [
     'simplified',
     'traditional',
     'pinyin',
   ];
-  List<String> get baseCategories => _identifiers;
 
   ChCharacter({
     super.specs,
@@ -386,10 +582,12 @@ class ChCharacter extends Character {
   void set(String category, value, {bool force = true}) {
     if (category == 'pinyin' && value is String) {
       value = _modString.set(value).toNumericPinyin().result;
+      _log.finer('Convert pinyin to numeric style.');
     }
     if ((category == 'simplified' || category == 'traditional') &&
         value is String) {
       value = _modString.set(value).toCleanLanguage('chinese').result;
+      _log.finer('Cleanup chinese character symbols.');
     }
     super.set(category, value, force: force);
   }
@@ -398,36 +596,42 @@ class ChCharacter extends Character {
   ChCharacter createInstance({
     Map<String, Type>? specs,
     Map<String, dynamic>? entry,
+    List<String>? baseCategories,
   }) {
-    return ChCharacter(specs: specs ?? {}, entry: entry ?? {});
+    if (baseCategories != null) {
+      _log.fine('Cannot change baseCategories of ChCharacter.');
+    }
+    _log.finer('Create instance of Character with different entry.');
+    if (_hasSyntax) {
+      return ChCharacter(
+        specs: specs ?? Map<String, Type>.from(categories),
+        entry: entry ?? data.deepCopy(),
+        mapSyntax: _mapSyntax,
+        mapColor: _mapColor,
+        mapColorFav: _mapColorFav,
+      );
+    }
+    _log.finest('Instance is missing syntax maps.');
+    return ChCharacter(specs: specs ?? {}, entry: entry ?? data.deepCopy());
   }
-
-  @override
-  ChCharacter copy() => super.copy() as ChCharacter;
-
-  @override
-  ChCharacter copyWith({
-    Map<String, Type>? specs,
-    Map<String, dynamic>? entry,
-  }) => super.copyWith(specs: specs, entry: entry) as ChCharacter;
 
   /* ================================================================ */
   /*                              CHINESE                             */
   /* ================================================================ */
 
   String get numericPinyin {
-    final pinyin = data['pinyin'] as String;
-    return _modString.set(pinyin).toNumericPinyin().result as String;
+    final String pinyin = "${data['pinyin']}";
+    return _modString.set(pinyin).toNumericPinyin().result;
   }
 
   String get toneMarkedPinyin {
-    final pinyin = data['pinyin'] as String;
-    return _modString.set(pinyin).toToneMarkedPinyin().result as String;
+    final String pinyin = "${data['pinyin']}";
+    return _modString.set(pinyin).toToneMarkedPinyin().result;
   }
 
   String get plainPinyin {
-    final pinyin = data['pinyin'] as String;
-    return _modString.set(pinyin).toPlainPinyin().result as String;
+    final String pinyin = "${data['pinyin']}";
+    return _modString.set(pinyin).toPlainPinyin().result;
   }
 
   /* ================================================================ */
@@ -457,17 +661,10 @@ class ChCharacter extends Character {
 
   List<String> get variants {
     final variantsData = get(_variantKey);
-    if (variantsData == null || variantsData is! List) {
-      return [];
-    }
-    final variants =
-        _modList.set(variantsData).findFirstChar('chinese').result
-            as List<String>;
-    // if (variants == null) return [];
-    // if (variants is String) return [variants];
-    // if (variants is List) return List<String>.from(variants);
-    // return [];
-    return variants;
+    if (variantsData == null || variantsData is! List) return [];
+    final variants = List<String>.from(variantsData);
+    final modifier = modify(_variantKey) as TextModifier<List<String>>;
+    return modifier.set(variants).findFirstChar('chinese').result;
   }
 
   List<String> get toUnicode {
@@ -519,7 +716,9 @@ class ChCharacter extends Character {
     } else if (method == 'hash') {
       unique = "${plainPinyin}_$hashCodeFormatted";
     } else {
-      unique = '$hashCode';
+      throw UnimplementedError(
+        'uniqueID has not been implemented for method $method".',
+      );
     }
 
     if (unique.startsWith('_')) unique = 'empty_char';

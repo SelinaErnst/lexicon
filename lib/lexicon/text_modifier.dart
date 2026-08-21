@@ -1,13 +1,13 @@
 import 'utils.dart';
 import 'text_action.dart';
-import 'package:logging/logging.dart';
+// import 'package:logging/logging.dart';
 
-final Logger _log = Logger('TextModEngine');
+// final Logger _log = Logger('TextModEngine');
 
 class TextModifier<T extends Object> {
   T _input;
   T result;
-  TextAction? _strAct;
+  // TextAction? _strAct;
   TextAction? _inputAct;
 
   static const String _cjkRadSupl = r'\u2E80-\u2EFF';
@@ -114,16 +114,10 @@ class TextModifier<T extends Object> {
   }
 
   void addAction(
-    Map<String, dynamic> mapSyntax,
-    Map<String, dynamic> mapColor, {
+    Map<String, dynamic>? mapSyntax,
+    Map<String, dynamic>? mapColor, {
     Map<String, dynamic>? mapColorFav,
   }) {
-    _strAct = TextAction(
-      '',
-      mapColor: mapColor,
-      mapSyntax: mapSyntax,
-      mapColorFav: mapColorFav,
-    );
     _inputAct = TextAction(
       result,
       mapColor: mapColor,
@@ -131,6 +125,8 @@ class TextModifier<T extends Object> {
       mapColorFav: mapColorFav,
     );
   }
+
+  bool get hasAct => _inputAct != null;
 
   TextAction get act {
     if (_inputAct == null) {
@@ -140,13 +136,13 @@ class TextModifier<T extends Object> {
     return _inputAct!;
   }
 
-  TextAction getStrAct(String text) {
-    if (_strAct == null) {
-      throw AssertionError('TextAction object has not been added yet.');
-    }
-    _strAct!.set(text);
-    return _strAct!;
-  }
+  // TextAction getStrAct(String text) {
+  //   if (_strAct == null) {
+  //     throw AssertionError('TextAction object has not been added yet.');
+  //   }
+  //   _strAct!.set(text);
+  //   return _strAct!;
+  // }
 
   /* ================================================================ */
   /*                              METHODS                             */
@@ -210,13 +206,6 @@ class TextModifier<T extends Object> {
       funcName: 'toSentence',
     );
 
-    final List<String> linkSyntax = [];
-    try {
-      act.command = 'link';
-      linkSyntax.addAll(act.getSyntax());
-    } catch (e) {
-      _log.warning('Some characters cannot be removed.');
-    }
     result = _process((sentence) {
       String processed = sentence;
       for (var entry in _punctuationMap.entries) {
@@ -226,9 +215,7 @@ class TextModifier<T extends Object> {
           processed = processed.replaceAll(entry.value, entry.key);
         }
       }
-      for (var element in linkSyntax) {
-        processed = processed.replaceAll(element, '');
-      }
+
       return processed;
     }, ignoreEmpty: false);
     return this;
@@ -398,15 +385,15 @@ class TextModifier<T extends Object> {
     return this;
   }
 
-  TextModifier<T> linkPinyin() {
-    RegExp pattern = rFrame;
-    return modifyPattern(pattern, (match) {
-      final linked = getStrAct(
-        match.group(1)!,
-      ).applySyntax(commandList: ['link']).result;
-      return '[$linked]';
-    });
-  }
+  // TextModifier<T> linkPinyin() {
+  //   RegExp pattern = rFrame;
+  //   return modifyPattern(pattern, (match) {
+  //     final linked = getStrAct(
+  //       match.group(1)!,
+  //     ).applySyntax(commandList: ['link']).result;
+  //     return '[$linked]';
+  //   });
+  // }
 
   TextModifier<T> convertPinyin() {
     TextModifier<String> mod = _getMod('');

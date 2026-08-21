@@ -30,13 +30,13 @@ class TextAction<T extends Object> {
     return this;
   }
 
-  bool _hasSyntax() => mapColor != null && mapSyntax != null;
+  bool get _hasSyntax => mapColor != null && mapSyntax != null;
 
   void _warnMissingSyntax() {
-    if (!_hasSyntax()) throw AssertionError('Syntax has not been added yet.');
+    if (!_hasSyntax) throw AssertionError('Syntax has not been added yet.');
   }
   // void  _warnMissingFavourites(){
-  //   if (!_hasSyntax()) throw AssertionError('Favourite Colors have not been added yet.');
+  //   if (!_hasSyntax) throw AssertionError('Favourite Colors have not been added yet.');
   // }
 
   TextAction<T> set(T input, {String? command, String? color}) {
@@ -56,7 +56,7 @@ class TextAction<T extends Object> {
         mapSyntax: mapSyntax,
         mapColor: mapColor,
       );
-    } else if (!_actString!._hasSyntax()) {
+    } else if (!_actString!._hasSyntax) {
       _actString!.setSyntax(
         mapColor: mapColor,
         mapSyntax: mapSyntax,
@@ -193,6 +193,27 @@ class TextAction<T extends Object> {
       return processedResult as T;
     }
     return result;
+  }
+
+  TextAction<T> modifyPattern(
+    RegExp pattern,
+    String Function(Match match) onMatch,
+  ) {
+    result = _process((text) {
+      return text.replaceAllMapped(pattern, onMatch);
+    });
+    return this;
+  }
+
+  TextAction<T> linkPinyin() {
+    RegExp pattern = RegExp(r'\[([^\]\[]+)\]');
+    return modifyPattern(pattern, (match) {
+      final linked = actString
+          .set(match.group(1)!)
+          .applySyntax(commandList: ['link'])
+          .result;
+      return '[$linked]';
+    });
   }
 
   TextAction<T> applySyntax({List<String> commandList = const []}) {

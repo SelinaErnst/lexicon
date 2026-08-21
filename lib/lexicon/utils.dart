@@ -3,6 +3,18 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 
+extension RegExpMatchAllGroups on RegExpMatch {
+  /// Returns a non-nullable list of all captured groups.
+  List<String> get allGroups {
+    return List.generate(groupCount, (i) => group(i + 1) ?? '');
+  }
+
+  /// Optional: Returns a nullable list of all captured groups if you need to preserve nulls.
+  List<String?> get allGroupsNullable {
+    return groups(List.generate(groupCount, (i) => i + 1));
+  }
+}
+
 extension StringStripExtension on String {
   String strip(String string) {
     if (isEmpty || string.isEmpty) return this;
@@ -68,21 +80,23 @@ bool isExactType(Type thisType, dynamic thatType) {
   return thisTypeStr == thatTypeStr;
 }
 
-final Map<Type, Object Function(Map<dynamic, dynamic>)> _mapConverters = {
-  Map<String, String>: (source) => Map<String, String>.from(source),
-  Map<String, int>: (source) => Map<String, int>.from(source),
-  Map<String, List<String>>: (source) => Map<String, List<String>>.from(source),
-  Map<String, dynamic>: (source) => Map<String, dynamic>.from(source),
+final Map<String, Object Function(Map<dynamic, dynamic>)> _mapConverters = {
+  'Map<String, String>': (source) => Map<String, String>.from(source),
+  'Map<String, int>': (source) => Map<String, int>.from(source),
+  'Map<String, List<String>>': (source) =>
+      Map<String, List<String>>.from(source),
+  'Map<String, dynamic>': (source) => Map<String, dynamic>.from(source),
+  'Map<dynamic, dynamic>': (source) => Map<dynamic, dynamic>.from(source),
 };
 
-final Map<Type, Object Function(List<dynamic>)> _listConverter = {
-  List<String>: (source) => List<String>.from(source),
-  List<int>: (source) => List<int>.from(source),
-  List<dynamic>: (source) => List<dynamic>.from(source),
+final Map<String, Object Function(List<dynamic>)> _listConverter = {
+  'List<String>': (source) => List<String>.from(source),
+  'List<int>': (source) => List<int>.from(source),
+  'List<dynamic>': (source) => List<dynamic>.from(source),
 };
 
 dynamic convertMapToType(Map<dynamic, dynamic> source, Type targetType) {
-  final converter = _mapConverters[targetType];
+  final converter = _mapConverters[targetType.toString().strip('_')];
   if (converter != null) {
     return converter(source);
   }
@@ -91,7 +105,7 @@ dynamic convertMapToType(Map<dynamic, dynamic> source, Type targetType) {
 }
 
 dynamic convertListToType(List<dynamic> source, Type targetType) {
-  final converter = _listConverter[targetType];
+  final converter = _listConverter[targetType.toString().strip('_')];
   if (converter != null) {
     return converter(source);
   }
@@ -142,22 +156,29 @@ Future<void> writeJsonToFile(Map<String, dynamic> ogMap, File file) async {
 //   }
 // }
 
-Future<Map<String, dynamic>?> readJSON(File file) async {
+Future<T> readJSON<T>(File file) async {
+  dynamic result;
   try {
     final jsonString = await file.readAsString();
-    return jsonDecode(jsonString) as Map<String, dynamic>;
+    result = jsonDecode(jsonString);
   } catch (e) {
-    return null;
+    result = null;
   }
+  if (result is T) return result;
+  print(result.runtimeType);
+  throw Exception('Data is not of type $T');
 }
 
-Map<String, dynamic>? readJSONSync(File file) {
+T readJSONSync<T>(File file) {
+  dynamic result;
   try {
     final jsonString = file.readAsStringSync();
-    return jsonDecode(jsonString) as Map<String, dynamic>;
+    result = jsonDecode(jsonString);
   } catch (e) {
-    return null;
+    result = null;
   }
+  if (result is T) return result;
+  throw Exception('Data is not of type $T');
 }
 
 bool isMapCompletelyEmpty(Map<String, dynamic> map) {
