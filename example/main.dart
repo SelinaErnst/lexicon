@@ -16,12 +16,13 @@ void main() async {
   /* ––––––––––––––––––––––––– config files ––––––––––––––––––––––––– */
 
   /* –––––––––––––––––––––––– dictionary init ––––––––––––––––––––––– */
-  Dictionary dictionary = ChDictionary();
+  ChDictionary dictionary = ChDictionary();
   dictionary.addSyntax(synatxMap, colorMap);
   await dictionary.read(File('assets/MCD.jsonl'), categories: catMap);
   /* –––––––––––––––––––––––– dictionary init ––––––––––––––––––––––– */
 
-  // print(dictionary.getSubset(List.generate(10, (index) => index)));
-  // print(dictionary.getCharacter(['八','','ba1']));
-  // print(dictionary.getCharacter(Character()));
+  // print(dictionary.getSlice(stop: 10));
+  // final char = dictionary.search(pattern: 'ri4')[0];
+  // print(char);
+  // print(char.toMarkdownTable());
 }

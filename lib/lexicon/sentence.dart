@@ -11,28 +11,32 @@ class Sentence {
 
   final TextModifier<String> mod;
 
-  // static final RegExp _bracketPattern = RegExp(r'[《》〈〉]');
-
   Sentence({
     String text = '',
     String pinyin = '',
     String translation = '',
-    required this.mod,
-  }) {
+    TextModifier<String>? mod,
+  }) : mod = mod ?? TextModifier<String>('') {
     _text = text;
-    _text = mod.set(_text).removeSyntax().toCleanLanguage('chinese').result;
+    _text = this.mod
+        .set(_text)
+        .removeSyntax()
+        .toCleanLanguage('chinese')
+        .result
+        .trim();
 
     _pinyin = pinyin;
-    _pinyin = mod
+    _pinyin = this.mod
         .set(_pinyin)
         .removeSyntax()
         .toCleanLanguage('english')
         .toNumericPinyin()
-        .result;
-    _processedPinyin = mod.toToneMarkedPinyin().result;
+        .result
+        .trim();
+    _processedPinyin = this.mod.toToneMarkedPinyin().result.trim();
 
     _transl = translation;
-    _transl = mod.set(_transl).toCleanLanguage('english').result;
+    _transl = this.mod.set(_transl).toCleanLanguage('english').result;
   }
 
   String get text => _text;
@@ -53,12 +57,20 @@ class Sentence {
     return {'text': text, 'pinyin': pinyin, 'translation': translation};
   }
 
+  void addSyntax({
+    Map<String, dynamic>? mapSyntax,
+    Map<String, dynamic>? mapColor,
+    Map<String, dynamic>? mapColorFav,
+  }) {
+    mod.addSyntax(mapSyntax: mapSyntax, mapColor: mapColor, mapColorFav: mapColorFav);
+  }
+
   String applySyntax({String color = 'grey'}) {
     mod.set(pinyin);
-    mod.act.color = color;
-    mod.act.command = 'newline';
-    final synNewLine = mod.act.getSyntax()[0];
-    final synPinyin = mod.act.applySyntaxCommands(['color']).result as String;
+    mod.color = color;
+    mod.command = 'newline';
+    final synNewLine = mod.getSyntax()[0];
+    final synPinyin = mod.applySyntaxCommands(['color']).result;
     final List<String> result = [text, synPinyin, translation];
     result.removeWhere((item) => item.isEmpty);
     return '${result.join(synNewLine)}$synNewLine';

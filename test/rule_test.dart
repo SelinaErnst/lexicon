@@ -1,11 +1,12 @@
 import 'package:lexicon/lexicon/dictionary.dart';
 import 'package:lexicon/lexicon/rule.dart';
 import 'package:lexicon/lexicon/character.dart';
+import 'package:lexicon/lexicon/sentence.dart';
 // import 'package:lexicon/lexicon/sentence.dart';
 import 'package:lexicon/lexicon/text_modifier.dart';
 import 'package:test/test.dart';
 import 'package:logging/logging.dart';
-
+import 'package:collection/collection.dart';
 import 'helper.dart';
 
 void main() {
@@ -29,7 +30,7 @@ void main() {
       final colors = getColors();
       final favColors = getFaves();
       modText = TextModifier('');
-      modText.addAction(syntax, colors, mapColorFav: favColors);
+      modText.addSyntax(mapSyntax: syntax, mapColor: colors, mapColorFav: favColors);
     });
 
     setUp(() {
@@ -37,11 +38,10 @@ void main() {
       empty = Rule();
       rule = Rule(
         entry: {
-          'mod': modText,
-          'title': 'ABER ich Mag Dich  ',
-          'subtitle': 'a',
+          'title': ' ABER ich Mag Dich  ',
+          'subtitle': ' a ',
           'sentences': [
-            {'text': '我去学校.'},
+            {'text': ' 我去学校. ', 'pinyin': 'wo3'},
             {'sc': 's'},
           ],
           'characters': [
@@ -50,13 +50,13 @@ void main() {
             {'sc': 'y'},
           ],
           'charactersOpp': [
-            {'simplified': 'x', 'pinyin': 'y'},
+            {'simplified': 'a', 'pinyin': 'b'},
           ],
         },
       );
-
       filled = Rule(
         entry: {
+          'level': '',
           'title': '',
           'subtitle': '',
           'sentences': [
@@ -68,71 +68,171 @@ void main() {
           ],
         },
       );
-      Logger.root.level = Level.ALL;
+      // Logger.root.level = Level.ALL;
     });
 
-    test('initializing empty', () {
-      expect(filled.isEmpty, true);
-      expect(empty.isEmpty, true);
-      expect(empty.title, '');
-      empty.tags.add('x');
-      expect(empty.tags, ['x']);
-      expect(empty.tags.runtimeType, List<String>);
-      expect(empty.isEmpty, false);
+    group('Rule attributes', () {
+      test('empty Rule', () {
+        // Logger.root.level = Level.FINE;
+        expect(filled.isEmpty, true);
+        expect(empty.isEmpty, true);
+        expect(empty.strict, true);
+        expect(empty.title, '');
+        expect(empty.tags.runtimeType, List<String>);
 
-      expect(empty.categories['characters'], Dictionary);
-      expect(empty.characters.runtimeType, Dictionary);
-      expect(empty.data['characters'].runtimeType, Dictionary);
-      expect(empty['characters'].runtimeType, Dictionary);
+        expect(empty.categories['characters'], Dictionary);
+        expect(empty.characters.runtimeType, Dictionary);
+        expect(empty.data['characters'].runtimeType, Dictionary);
+        expect(empty['characters'].runtimeType, Dictionary);
+        expect(empty['characters'].name, 'ruleCharacters');
+        expect(empty.characters.baseCategories, [
+          'simplified',
+          'traditional',
+          'pinyin',
+        ]);
+        expect(rule.toMap()['characters'] is List, true);
+
+        expect(empty.baseCategories, ['level', 'title', 'subtitle']);
+      });
+
+      test('clear Rule', () {
+        expect(rule.isEmpty, false);
+        rule.clear();
+        expect(rule.isEmpty, true);
+      });
+
+      test('filled Rule', () {
+        expect(rule.isEmpty, false);
+
+        expect(rule.sentences.length, 1);
+        expect(rule.sentences[0].runtimeType, Sentence);
+
+        expect(rule.characters.length, 2);
+        expect(rule.characters[0].runtimeType, Character);
+        expect(rule.charactersOpp.length, 1);
+        expect(rule.charactersOpp[0].runtimeType, Character);
+        expect(rule.charactersAll.length, 3);
+
+        expect(rule.references.length != rule.characters.length, true);
+        expect(rule.references, ['＿x＿x']);
+        expect(rule.title, 'ABER ich Mag Dich');
+        expect(rule.sentences[0].text, '我去学校。');
+
+        expect(rule.uniqueID(), '_AiMD_a');
+        expect(rule.uniqueID(method: 'hash'), '_1822514334');
+
+        expect(rule.get('test'), null);
+        print(rule.toMarkdownTable());
+      });
     });
 
-    test('copy', () {
-      final Rule copy = rule.copy();
-      final Rule other = rule.copyWith({
-        'sentences': [
-          {'text': 'abc'},
-        ],
-      }, merge: true);
-      expect(copy.data, rule.data);
-      expect(other.data == rule.data, false);
-      expect(rule.sentences.length, 1);
-      expect(other.sentences.length, 2);
+    group('changing attributes', () {
+      test('link rule to rules in characters', () {
+        // empty.level = 'C1';
+        // empty.title = 'ABC';
+        expect(identical(empty.characters.rules[0], empty), true);
+      });
+      test('editiong attributes directly will affect internal data', () {
+        empty.tags.add('x');
+        expect(empty.tags, ['x']);
+        expect(empty.isEmpty, false);
+        empty.set('tags', null);
+        expect(empty.tags.isEmpty, true);
+        expect(empty.isEmpty, true);
+        empty['tags'] = null;
+        expect(empty.isEmpty, true);
+        expect(empty['tags'], equals(empty.tags));
+        expect(
+          ListEquality<String>().equals(
+            empty['tags'] as List<String>,
+            empty.tags,
+          ),
+          true,
+        );
+      });
+
+      test('cannot change categories', () {
+        expect(() => rule.categories['level'] = int, throwsUnsupportedError);
+      });
+
+      test('add characters', () {
+        // Logger.root.level = Level.FINE
+        expect(rule.characters.length, 2);
+        rule.data['characters'] += ChCharacter(entry: {'traditional': 'b'});
+        expect(rule.characters.length, 3);
+        rule.data['characters'] += Dictionary(characters: [rule]);
+        expect(rule.characters.length, 3);
+      });
+
+      test('cannot create a dictionary by addition', () {
+        expect(() => rule + filled, throwsUnsupportedError);
+      });
     });
 
-    test('add characters', () {
-      expect(rule.characters.length, 2);
-      rule.characters += ChCharacter(entry: {'traditional': 'b'});
-      expect(rule.characters.length, 3);
-      rule.characters += Dictionary(characters: [rule]);
-      expect(rule.characters.length, 4);
+    group('create new instance', () {
+      test('simple copy', () {
+        final copyA = filled.copy();
+        expect(copyA == filled, true);
+        final copyB = filled.copyWith({'explanation': 'test'});
+        expect(copyB == filled, true);
+        expect(filled.exact(copyB), false);
+        final copyC = filled.copyWith({'test': 'test'});
+        expect(filled.exact(copyC), true);
+      });
+
+      test('Rule type is pretty restrictive', () {
+        expect(filled.strict, true);
+        expect(filled.relax().strict == false, false);
+        expect(filled.baseCategories, ['level', 'title', 'subtitle']);
+        expect(
+          filled.reconfigure(baseCategories: ['id']).baseCategories == ['id'],
+          false,
+        );
+        expect(
+          filled.copyWith({
+            'tags': ['t'],
+          }).tags,
+          ['t'],
+        );
+      });
+      test('does not change type', () {
+        expect(filled.copy().runtimeType, Rule);
+        expect(
+          filled.copyWith({
+            'tags': ['t'],
+          }).runtimeType,
+          Rule,
+        );
+        expect(filled.reconfigure(baseCategories: ['id']).runtimeType, Rule);
+        expect(filled.restrict().runtimeType, Rule);
+        expect(filled.relax().runtimeType, Rule);
+      });
     });
 
-    test('cannot change categories', () {
+    test('write with syntax', () {
+      // Logger.root.level = Level.OFF;
+      expect(filled.applySyntaxToCharacters().length, 0);
       expect(
-        () => rule.reconfigure(specs: {'test': String}),
-        throwsUnsupportedError,
+        () => rule.applySyntaxToCharacters(),
+        throwsA(isA<AssertionError>()),
       );
-      expect(() => rule.categories['level'] = int, throwsUnsupportedError);
+      rule.addSyntax(getSyntax(), getColors(), mapColorFav: getFaves());
+      final syntaxed = rule.applySyntaxToCharacters();
+      expect(
+        syntaxed[0]['other_characters'][0] ==
+            rule.charactersOpp[0]['simplified'],
+        true,
+      );
     });
 
-    test('initializing populated', () {
-      expect(rule.isEmpty, false);
-      expect(rule.characters.length, 2);
-      expect(rule.charactersOpp.length, 1);
+    test('modify category content', () {
+      expect(rule.title, 'ABER ich Mag Dich');
+      rule.modify('title').replaceAll('ABER', 'aber');
+      expect(rule.title, 'aber ich Mag Dich');
 
-      expect(rule.charactersAll.length, 3);
-      expect(rule.references, ['＿x＿x']);
-      expect(rule['title'], 'ABER ich Mag Dich');
-      expect(rule.get('test'), null);
-      expect(rule.sentences[0].text, '我去学校。');
-
-      expect(rule.uniqueID(), '_AiMD_a');
-      expect(rule.uniqueID(method: 'hash'), '_1822514334');
-
-      rule.set('tags', ['tag']);
-      expect(rule['tags'] == rule.tags, true);
-
-      expect(rule.toMap()['characters'] is List, true);
+      expect(rule['sentences'][0].pinyin, 'wǒ');
+      rule.modify('sentences').toNumericPinyin();
+      expect(rule['sentences'][0].pinyin, 'wǒ');
     });
   });
 }

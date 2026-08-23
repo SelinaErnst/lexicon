@@ -1,194 +1,183 @@
 import 'package:lexicon/lexicon/text_modifier.dart';
 import 'package:lexicon/lexicon/utils.dart';
-import 'package:lexicon/lexicon/text_action.dart';
 import 'package:test/test.dart';
 import 'dart:io';
 
 void main() {
-  runTextModifier();
-  runTextAction();
-}
-
-void runTextModifier() {
-  /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-
   final List<String> listText = ['ǜ asksnc', '，', '八 八', '八八'];
   final String pinyinNumeric = 'ba1ba5 shi4 wo3 de.';
   final String pinyinTones = 'bāba shì wǒ de.';
 
   final String pathSyntax = 'assets/syntax.json';
   final String pathColors = 'assets/colors.json';
-  Map<String, dynamic> colors = readJSONSync(File(pathColors));
-  Map<String, dynamic> data = readJSONSync(File(pathSyntax));
+  late Map<String, dynamic> colors;
+  late Map<String, dynamic> syntax;
 
-  /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
+  late TextModifier mod;
+  late TextModifier<String> modStr;
+  late TextModifier<List<String>> modList;
+  late TextModifier<String> modAct;
+
+  final Map<String, String> favColors = {
+    "blue": "Dodger Blue",
+    "teal": "Strong Blue",
+    "green": "Cyan Blue",
+    "grey": "Light Slate Gray",
+  };
+
+  setUpAll(() {
+    colors = readJSONSync(File(pathColors));
+    syntax = readJSONSync(File(pathSyntax));
+    mod = TextModifier('');
+    modStr = TextModifier('');
+    modList = TextModifier(['']);
+    modAct = TextModifier('');
+    modAct.addSyntax(
+      mapColor: colors,
+      mapSyntax: syntax,
+      mapColorFav: favColors,
+    );
+  });
 
   group('TextModifier', () {
-    /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
+    group('convert text', () {
+      test('input type has to be the same', () {
+        expect(() => modList.set(''), throwsA(isA<ArgumentError>()));
+        expect(() => modStr.set(['']), throwsA(isA<ArgumentError>()));
 
-    final mod = TextModifier(listText);
+        expect(mod.set('_ a_a.').toCleanLink().result, 'a＿a');
+        expect(mod.set('_ a_a.').toCleanRef().result, '＿a＿a.');
+        expect(mod.set('_ a_a.').toCleanLanguage('chinese').result, '＿ a＿a。');
+        expect(mod.set(['_a_a.', 'b']).toCleanLink().result, ['a＿a', 'b']);
+      });
 
-    /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
+      test('find first character of language', () {
+        modList.set(listText);
+        expect(modList.findFirstChar('chinese').result, ['八', '八八']);
+        modList.set(listText);
+        expect(modList.findFirstChar('notChinese').result, ['ǜ asksnc', '，']);
+        expect(modList.findFirstChar('english').result, ['asksnc']);
+      });
 
-    test('find first character of language', () {
-      expect(mod.findFirstChar('chinese').result, ['八', '八八']);
-      expect(mod.set(listText).findFirstChar('notChinese').result, [
-        'ǜ asksnc',
-        '，',
-      ]);
-      expect(mod.findFirstChar('english').result, ['asksnc']);
+      test('convert pinyin', () {
+        modStr.set(pinyinNumeric);
+        expect(modStr.toNumericPinyin().result, 'ba1ba5 shi4 wo3 de.');
+        expect(modStr.toPlainPinyin().result, 'baba shi wo de.');
+        expect(modStr.toToneMarkedPinyin().result, 'baba shi wo de.');
+        expect(modStr.toCleanLanguage('chinese').result, 'baba shi wo de。');
+        expect(modStr.toCleanLanguage('english').result, 'baba shi wo de.');
+        modStr.set(pinyinTones);
+        expect(modStr.toToneMarkedPinyin().result, 'bāba shì wǒ de.');
+        expect(
+          modStr.toNumericPinyin().result,
+          'baba1 shi4 wo3 de.',
+        ); // ! PROBLEM
+
+        String text =
+            'ba4 chi1 wo3 deng1 nv3 nü3 hv0ha xx aa hao3ba4 ui2ear1 iu2';
+        modStr.set(text).toToneMarkedPinyin();
+        expect(modStr.result, 'bà chī wǒ dēng nǚ nǚ hüha xx aa hǎobà uíeār iú');
+        modStr.toNumericPinyin();
+        expect(
+          modStr.result,
+          'ba4 chi1 wo3 deng1 nv3 nv3 hvha xx aa haoba4 uiear1 iu2',
+        ); // !Problem
+        modStr.toPlainPinyin().toToneMarkedPinyin();
+        expect(modStr.result, 'ba chi wo deng nv nv hvha xx aa haoba uiear iu');
+      });
     });
 
-    /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
+    group('apply syntax', () {
+      test('apply command from syntax', () {
+        modStr.set('abc [ [list Text] a] abc');
+        modList.set(['[a1a2]', 'ba4', '[chi1]']);
 
-    final modA = TextModifier(pinyinNumeric);
-    final modB = TextModifier(pinyinTones);
+        expect(
+          () => modStr.applySyntaxCommands(['tab']),
+          throwsA(isA<AssertionError>()),
+        );
 
-    /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
+        expect(modStr.hasSyntax, false);
+        modStr.addSyntax(mapSyntax: syntax, mapColor: colors);
+        expect(modStr.hasSyntax, true);
 
-    test('convert pinyin', () {
-      expect(modA.toNumericPinyin().result, 'ba1ba5 shi4 wo3 de.');
-      expect(modA.toPlainPinyin().result, 'baba shi wo de.');
-      expect(modA.toToneMarkedPinyin().result, 'baba shi wo de.');
-      expect(modA.toCleanLanguage('chinese').result, 'baba shi wo de。');
-      expect(modA.toCleanLanguage('english').result, 'baba shi wo de.');
-      expect(modB.toToneMarkedPinyin().result, 'bāba shì wǒ de.');
-      expect(modB.toNumericPinyin().result, 'baba1 shi4 wo3 de.'); // ! PROBLEM
+        expect(
+          modStr.applySyntaxCommands(['tab']).result,
+          'abc [ [list Text] a] abc',
+        );
+        expect(modStr.linkPinyin().result, 'abc [ [list Text] a] abc');
+        expect(
+          modStr.set('abc [ [a1a3]]').convertPinyin().result,
+          'abc [ [āǎ]]',
+        );
+
+        expect(modList.convertPinyin().result, ['[āá]', 'ba4', '[chī]']);
+        modList
+            .set(['a\na', 'a\n\na', '■□●○'])
+            .addSyntax(mapSyntax: syntax, mapColor: colors);
+        expect(modList.writeToPleco().result, ['aa', 'a a', '◼◼◼◼']);
+      });
+
+      test('remove syntax', () {
+        modStr.set('abc [ [list Text] a] abc');
+        expect(modStr.removeSyntax().result, 'abc [ [list Text] a] abc');
+      });
+
+      test('get command and syntax', () {
+        expect(modAct.getFullCommand('normal'), 'normal');
+        expect(modAct.getFullCommand('b'), 'bold');
+        expect(modAct.getSyntax(cmd: 'b'), ['', '']);
+        expect(modAct.getSyntax().length, 0);
+      });
+
+      test('color command', () {
+        modAct.set('test everything');
+        modAct.color = 'green';
+        expect(
+          isExactType(modAct.mapColorFav.runtimeType, Map<String, String>),
+          true,
+        );
+        expect(modAct.result, 'test everything');
+        expect(modAct.color, '');
+        expect(modAct.command, null);
+      });
+
+      test('apply one command ', () {
+        modAct.color = 'green';
+        modAct.set('test test test', command: 's');
+        expect(
+          modAct.set('test test test', command: 's').applyCommand().result,
+          'AA00test test test',
+        );
+        expect(
+          modAct.set('test test test', command: 'color').applyCommand().result,
+          'test test test',
+        );
+        expect(
+          modAct.set('test test test', command: 'normal').applyCommand().result,
+          'test test test',
+        );
+        modAct.replaceAll('test', 'x').replaceAll(' ', '');
+        expect(modAct.result, 'xxx');
+        modAct.set('test everything', command: 'tab');
+        expect(modAct.applySyntax().result, 'test everything');
+        modAct.set('test everything', command: 'normal');
+        expect(modAct.applySyntax().result, 'test everything');
+      });
+
+      test('apply list of commands', () {
+        modAct.set('test');
+        expect(modAct.applySyntaxCommands(['nb', 'normal']).result, 'test');
+        expect(modAct.applySyntaxCommands(['normal', 'nb']).result, 'test');
+
+        modAct.set('test everything');
+        expect(
+          modAct.applySyntaxCommands(['nb', 'link', 'tab']).result,
+          'test everything',
+        );
+        modAct.set('test everything');
+        expect(modAct.applySyntaxCommands(['tab']).result, 'test everything');
+      });
     });
-
-    /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-
-    final modStr = TextModifier('abc [ [list Text] a] abc');
-    final modList = TextModifier(['[a1a2]', 'ba4', '[chi1]']);
-
-    /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-
-    test('apply command from syntax', () {
-      modStr.addAction(data, colors);
-      expect(
-        modStr.act.applySyntaxCommands(['tab']).result,
-        'abc [ [list Text] a] abc',
-      );
-      expect(modStr.act.linkPinyin().result, 'abc [ [list Text] a] abc');
-      expect(modStr.set('abc [ [a1a3]]').convertPinyin().result, 'abc [ [āǎ]]');
-
-      expect(modList.convertPinyin().result, ['[āá]', 'ba4', '[chī]']);
-    });
-
-    /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-
-    test('remove syntax', () {
-      modStr.set('abc [ [list Text] a] abc');
-      expect(modStr.removeSyntax().result, 'abc [ [list Text] a] abc');
-    });
-
-    /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-  });
-}
-
-void runTextAction() {
-  group('TextAction', () {
-    /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-
-    final String pathSyntax = 'assets/syntax.json';
-    final String pathColors = 'assets/colors.json';
-
-    Map<String, dynamic> colors = readJSONSync(File(pathColors));
-    Map<String, dynamic> data = readJSONSync(File(pathSyntax));
-    Map<String, dynamic>? dataAsync;
-
-    setUp(() async {
-      dataAsync = await readJSON(File(pathSyntax));
-    });
-
-    final Map<String, String> favColors = {
-      "blue": "Dodger Blue",
-      "teal": "Strong Blue",
-      "green": "Cyan Blue",
-      "grey": "Light Slate Gray",
-    };
-    final actStr = TextAction(
-      'test everything',
-      mapColorFav: favColors,
-      mapColor: colors,
-      mapSyntax: data,
-    );
-    final actList = TextAction(
-      [''],
-      mapColorFav: favColors,
-      mapColor: colors,
-      mapSyntax: data,
-    );
-
-    /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-    test('syntax json map', () {
-      expect(data, dataAsync);
-    });
-
-    /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-
-    test('initializing', () {
-      actStr.color = 'green';
-      expect(
-        isExactType(actStr.mapColorFav.runtimeType, Map<String, String>),
-        true,
-      );
-      expect(actStr.result, 'test everything');
-      expect(actStr.color, '');
-      expect(actStr.command, null);
-      actList.result = ['ab [] abd', 'skncs as'];
-      // print(actList.applySyntax(commandList: ['tab']));
-    });
-
-    /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-
-    test('get command and syntax', () {
-      expect(actStr.getFullCommand('normal'), 'normal');
-      expect(actStr.getFullCommand('b'), 'bold');
-      expect(actStr.getSyntax(cmd: 'b'), ['', '']);
-      expect(actStr.getSyntax().length, 0);
-    });
-
-    /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-
-    test('apply one command ', () {
-      actStr.color = 'green';
-      actStr.set('test test test', command: 's');
-      expect(
-        actStr.set('test test test', command: 's').applyCommand().result,
-        'AA00test test test',
-      );
-      expect(
-        actStr.set('test test test', command: 'color').applyCommand().result,
-        'test test test',
-      );
-      expect(
-        actStr.set('test test test', command: 'normal').applyCommand().result,
-        'test test test',
-      );
-
-      actStr.set('test everything', command: 'tab');
-      expect(actStr.applySyntax().result, 'test everything');
-      actStr.set('test everything', command: 'normal');
-      expect(actStr.applySyntax().result, 'test everything');
-    });
-
-    /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
-
-    test('apply list of commands', () {
-      actStr.set('test');
-      expect(actStr.applySyntaxCommands(['nb', 'normal']).result, 'test');
-      expect(actStr.applySyntaxCommands(['normal', 'nb']).result, 'test');
-
-      actStr.set('test everything');
-      expect(
-        actStr.applySyntaxCommands(['nb', 'link', 'tab']).result,
-        'test everything',
-      );
-      actStr.set('test everything');
-      expect(actStr.applySyntaxCommands(['tab']).result, 'test everything');
-    });
-
-    /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
   });
 }

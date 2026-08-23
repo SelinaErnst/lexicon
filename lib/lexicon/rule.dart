@@ -8,21 +8,31 @@ import 'package:logging/logging.dart';
 
 final Logger _log = Logger('RuleLog');
 
-late TextModifier<String> modifier;
-
 final Set<String> _idMethods = {'shorten', 'hash'}; // uniqueID : method
 
+final staticModifier = TextModifier<String>('');
+
 class Rule extends Character with CopyEngine<Rule> {
-  String level;
-  String title;
-  String subtitle;
-  String explanation;
-  List<String> tags;
-  List<String> structures;
-  List<String> structuresOpp;
-  List<Sentence> sentences;
-  Dictionary characters;
-  Dictionary charactersOpp;
+  String get level => data['level'] as String;
+  String get title => data['title'] as String;
+  String get subtitle => data['subtitle'] as String;
+  String get explanation => data['explanation'] as String;
+  List<String> get tags => data['tags'] as List<String>;
+  List<String> get structures => data['structures'] as List<String>;
+  List<String> get structuresOpp => data['structuresOpp'] as List<String>;
+  List<Sentence> get sentences => data['sentences'] as List<Sentence>;
+  Dictionary get characters => data['characters'] as Dictionary;
+  Dictionary get charactersOpp => data['charactersOpp'] as Dictionary;
+  // ChDictionary characters = ChDictionary(name: 'ruleCharacters');
+  // ChDictionary charactersOpp = ChDictionary(name: 'ruleCharactersOpp');
+  // Dictionary characters = Dictionary(
+  //   name: 'ruleCharacters',
+  //   baseCategories: ['simplified', 'traditional', 'pinyin'],
+  // );
+  // Dictionary charactersOpp = Dictionary(
+  //   name: 'ruleCharactersOpp',
+  //   baseCategories: ['simplified', 'traditional', 'pinyin'],
+  // );
 
   @override
   bool get strict => true;
@@ -30,49 +40,49 @@ class Rule extends Character with CopyEngine<Rule> {
   @override
   List<String> get baseCategories => ['level', 'title', 'subtitle'];
 
-  Rule._internal({required Map<String, dynamic> entry, super.specs})
-    : level = entry['level'] is String ? entry['level'].toString().trim() : '',
-      title = entry['title'] is String ? entry['title'].toString().trim() : '',
-      subtitle = entry['subtitle'] is String
-          ? entry['subtitle'].toString().trim()
-          : '',
-      explanation = entry['explanation'] is String
-          ? entry['explanation'].toString().trim()
-          : '',
-      tags = entry['tags'] is List ? List.from(entry['tags'] as List) : [],
-      structures = entry['structures'] is List
-          ? List.from(entry['structures'] as List)
-          : [],
-      structuresOpp = entry['structuresOpp'] is List
-          ? List.from(entry['structuresOpp'] as List)
-          : [],
-      sentences = entry['sentences'] is List
-          ? _listSentences(List.from(entry['sentences'] as List))
-          : [],
-      characters = Dictionary(characters: entry['characters']),
-      charactersOpp = Dictionary(characters: entry['charactersOpp']) {
-    update({
-      'level': level,
-      'title': title,
-      'subtitle': subtitle,
-      'explanation': explanation,
-      'tags': tags,
-      'structures': structures,
-      'structuresOpp': structuresOpp,
-      'sentences': sentences,
-      'characters': characters,
-      'charactersOpp': charactersOpp,
-    });
+  Rule._internal({
+    required Map<String, dynamic> entry,
+    super.specs,
+    Map<String, dynamic>? mapSyntax,
+    Map<String, dynamic>? mapColor,
+    Map<String, dynamic>? mapColorFav,
+  }) {
+    
+    data['characters'] = Dictionary(
+      name: 'ruleCharacters',
+      baseCategories: ['simplified', 'traditional', 'pinyin'],
+    );
+
+    data['charactersOpp'] = Dictionary(
+      name: 'ruleCharactersOpp',
+      baseCategories: ['simplified', 'traditional', 'pinyin'],
+    );
+
+    for (final item in categories.entries) {
+      if (entry.containsKey(item.key)) {
+        set(item.key, entry[item.key]);
+      } else {
+        set(item.key, null);
+      }
+    }
+
+    if (mapColor != null && mapSyntax != null) {
+      addSyntax(mapSyntax, mapColor, mapColorFav: mapColorFav);
+    }
+    characters.setLinkedRule(this);
+    charactersOpp.setLinkedRule(this);
   }
 
   factory Rule({
     Map<String, dynamic> entry = const {},
-    TextModifier<String>? mod,
+    Map<String, dynamic>? mapSyntax,
+    Map<String, dynamic>? mapColor,
+    Map<String, dynamic>? mapColorFav,
   }) {
     final Map<String, Type> ruleCat = {
-      'level': String,
-      'title': String,
-      'subtitle': String,
+      // 'level': int,
+      // 'title': String,
+      // 'subtitle': String,
       'tags': List<String>,
       'structures': List<String>,
       'structuresOpp': List<String>,
@@ -82,13 +92,39 @@ class Rule extends Character with CopyEngine<Rule> {
       'charactersOpp': Dictionary,
     };
     _log.info('factory init of Rule');
-    modifier = mod ?? TextModifier('');
-    return Rule._internal(entry: entry, specs: ruleCat);
+    return Rule._internal(
+      entry: entry,
+      specs: ruleCat,
+      mapSyntax: mapSyntax,
+      mapColor: mapColor,
+      mapColorFav: mapColorFav,
+    );
   }
 
-  static List<Sentence> _listSentences(List<dynamic>? rawSentences) {
-    if (rawSentences == null) return [];
+  @override
+  Rule createInstance({
+    Map<String, dynamic>? entry,
+    Map<String, Type>? specs,
+    List<String>? baseCategories,
+    bool? strict,
+  }) {
+    _log.finer('Create instance of Rule.');
+    return Rule._internal(
+      entry: entry ?? data.deepCopy(),
+      specs: categories,
+      mapSyntax: mapSyntax,
+      mapColor: mapColor,
+      mapColorFav: mapColorFav,
+    );
+  }
 
+  void clear() {
+    for (final entry in categories.entries) {
+      remove(entry.key);
+    }
+  }
+
+  static List<Sentence> _listSentences(List<dynamic> rawSentences) {
     return rawSentences
         .map((item) {
           if (item is Sentence) return item;
@@ -96,11 +132,12 @@ class Rule extends Character with CopyEngine<Rule> {
             String text = item['text'] ?? '';
             String pinyin = item['pinyin'] ?? '';
             String translation = item['translation'] ?? '';
+
             return Sentence(
               text: text,
               pinyin: pinyin,
               translation: translation,
-              mod: modifier,
+              mod: staticModifier,
             );
           }
           return null;
@@ -113,90 +150,43 @@ class Rule extends Character with CopyEngine<Rule> {
 
   @override
   String toString() {
-    return 'Level $level: $title';
+    return '« Level $level: $title »';
   }
 
   @override
-  Rule copy() {
-    return Rule(entry: data.deepCopy());
-  }
-
-  @override
-  Rule createInstance({
-    Map<String, dynamic>? entry,
-    Map<String, Type>? specs,
-    List<String>? baseCategories,
-  }) {
-    if (baseCategories != null)
-      _log.fine('Cannot change baseCategories of Rule.');
-    final init = Rule._internal(
-      entry: entry ?? data.deepCopy(),
-      specs: categories,
-    );
-    return init;
-  }
-
-  @override
-  Rule reconfigure({Map<String, Type>? specs, List<String>? baseCategories}) {
-    throw UnsupportedError('reconfigure() is not available for Rule.');
-  }
-
-  void clear() {
-    level = "";
-    title = "";
-    subtitle = "";
-    tags = [];
-    structures = [];
-    structuresOpp = [];
-    sentences = [];
-    characters.empty();
-    charactersOpp.empty();
-  }
-
-  @override
-  void set(String category, value, {bool force = false}) {
-    if (value == null) {
-      throw ArgumentError('Value for "$category" cannot be null');
-    }
+  void set(String category, dynamic value, {bool force = false}) {
     if (force) {
-      _log.finer(
+      _log.finest(
         'Rule was set to force reset of category values. This option is deprecated.',
       );
     }
 
-    super.set(category, value, force: false);
-    if (sameTypes(categories[category]!, data[category].runtimeType)) {
-      final dataValue = data[category];
-      if (category == 'level' && dataValue is String) {
-        level = dataValue;
-      } else if (category == 'title' && dataValue is String) {
-        title = dataValue;
-      } else if (category == 'subtitle' && dataValue is String) {
-        subtitle = dataValue;
-      } else if (category == 'tags' && dataValue is List<String>) {
-        tags = dataValue;
-      } else if (category == 'structures' && dataValue is List<String>) {
-        structures = dataValue;
-      } else if (category == 'structuresOpp' && dataValue is List<String>) {
-        structuresOpp = dataValue;
-      } else if (category == 'sentences' && dataValue is List<Sentence>) {
-        sentences = dataValue;
-      } else if (category == 'characters' && dataValue is Dictionary) {
-        characters = dataValue;
-      } else if (category == 'charactersOpp' && dataValue is Dictionary) {
-        charactersOpp = dataValue;
+    dynamic dataValue;
+
+    if (['level', 'title', 'subtitle', 'explanation'].contains(category)) {
+      dataValue = value is String ? value.trim() : '';
+    } else if (['tags', 'structures', 'structuresOpp'].contains(category)) {
+      List<String> dataList = value is List<String> ? value : <String>[];
+      dataList = dataList.map((String element) => element.trim()).toList();
+      dataValue = List<String>.from(dataList);
+    } else if (category == 'sentences') {
+      dataValue = value is List ? _listSentences(value) : <Sentence>[];
+    } else if (['characters', 'charactersOpp'].contains(category)) {
+      dataValue = value;
+      if (category == 'characters') {
+        if (dataValue is! Dictionary) {
+          data['characters'].characters = dataValue;
+          dataValue = data['characters'];
+        }
+      }
+      if (category == 'charactersOpp') {
+        if (dataValue is! Dictionary) {
+          data['charactersOpp'].characters = dataValue;
+          dataValue = data['charactersOpp'];
+        }
       }
     }
-  }
-
-  @override
-  void remove(String category) {
-    throw UnsupportedError('remove() is not available for Rule.');
-  }
-
-  @override
-  void updateCategoryMap(String category, Map<String, dynamic>? updates) {
-    throw UnsupportedError('updateCategoryMap() is not available for Rule.');
+    super.set(category, dataValue, force: false);
   }
 
   @override
@@ -208,30 +198,25 @@ class Rule extends Character with CopyEngine<Rule> {
   }
 
   @override
-  void operator []=(String category, value) {
-    throw UnsupportedError('operator []= is not available for Rule.');
-  }
-
-  @override
   bool get isEmpty {
     return isMapCompletelyEmpty(toMap());
   }
 
-  Dictionary get charactersAll => characters.copy().add(charactersOpp);
+  Dictionary get charactersAll => characters.copy() + charactersOpp;
+
+  List<String> get references => characters.characters
+      .map(
+        (char) =>
+            modifier(String, char['simplified']).toCleanRef().result as String,
+      )
+      .where((char) => char.isNotEmpty)
+      .toList();
 
   List<String> _referenceOthers(Character thisChar) => charactersAll.characters
       .where((char) => char != thisChar)
       .map(
         (char) =>
-            modifier.set(char['simplified'] as String).toCleanRef().result,
-      )
-      .where((char) => char.isNotEmpty)
-      .toList();
-
-  List<String> get references => characters.characters
-      .map(
-        (char) =>
-            modifier.set(char['simplified'] as String).toCleanRef().result,
+            modifier(String, char['simplified']).toCleanRef().result as String,
       )
       .where((char) => char.isNotEmpty)
       .toList();
@@ -267,19 +252,25 @@ class Rule extends Character with CopyEngine<Rule> {
     return unique;
   }
 
-  List<String> applySyntaxToCharacters() {
+  List<Character> applySyntaxToCharacters() {
+    final List<Character> syntaxed = [];
     if (characters.isNotEmpty) {
       for (Character char in characters) {
         Map<String, dynamic> combined = {...char.data, ...data};
         combined['strucures_opp'] = combined['structuresOpp'];
-        combined['explanation'] = TextModifier(
-          combined['explanation'] as String,
-        ).act.linkPinyin();
+        combined['explanation'] = modifier(
+          String,
+          combined['explanation'],
+        ).linkPinyin();
         combined['sentences'] = combined['sentences'].map((Sentence sentence) {
+          sentence.addSyntax(
+            mapSyntax: mapSyntax,
+            mapColor: mapColor,
+            mapColorFav: mapColorFav,
+          );
           return sentence.applySyntax();
         }).toList();
         combined['other_characters'] = _referenceOthers(char);
-
         final newCategories = {
           ...categories,
           ...{'other_characters': List<String>},
@@ -289,13 +280,11 @@ class Rule extends Character with CopyEngine<Rule> {
         newCategories.remove('charactersOpp');
         newCategories.remove('structuresOpp');
 
-        // Character updated = char.copyWith(
-        //   specs: newCategories,
-        //   entry: combined,
-        // );
-        // print(updated.data);
+        final Character updated = char.reconfigure(specs: newCategories);
+        updated.update(combined);
+        syntaxed.add(updated);
       }
     }
-    return [];
+    return syntaxed;
   }
 }

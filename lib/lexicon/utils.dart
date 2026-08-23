@@ -56,6 +56,11 @@ bool isMapType(Type type) {
   return type == Map || str == 'Map' || str.contains('Map<');
 }
 
+bool isListType(Type type) {
+  final String str = type.toString();
+  return type == List || str == 'List' || str.contains('List<');
+}
+
 bool isError(Type type) {
   final String str = type.toString();
   return str.contains('Error');
@@ -215,7 +220,7 @@ Map<String, dynamic> convertMixedMap(Map<String, dynamic> ogMap) {
     if (value is Map<String, dynamic>) {
       return MapEntry(key, convertMixedMap(value));
     }
-    return MapEntry(key, _convertToPrimitive(value));
+    return MapEntry(key, convertToPrimitive(value));
   });
 }
 
@@ -230,11 +235,12 @@ List<dynamic> convertMixedList(List<dynamic> ogList) {
     if (item is Map<String, dynamic>) {
       return convertMixedMap(item);
     }
-    return _convertToPrimitive(item);
+    return convertToPrimitive(item);
   }).toList();
 }
 
-dynamic _convertToPrimitive(dynamic item) {
+dynamic convertToPrimitive(dynamic item) {
+  if (item is Map || item is List) return item;
   try {
     return item.toMapList();
   } catch (_) {
@@ -256,4 +262,24 @@ String getFileName(File file) {
 
 String getExtension(File file) {
   return p.extension(file.path);
+}
+
+int compareMultiple<T>(
+  T a,
+  T b,
+  List<int Function(T a, T b)> comparators, {
+  bool reverse = false,
+}) {
+  for (var compare in comparators) {
+    int result;
+    if (reverse) {
+      result = compare(b, a);
+    } else {
+      result = compare(a, b);
+    }
+    if (result != 0) {
+      return result;
+    }
+  }
+  return 0;
 }

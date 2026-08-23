@@ -63,14 +63,14 @@ void main() {
         },
       );
       charA = ChCharacter(entry: {'simplified': 'a', 'traditional': 'x'});
-      Logger.root.level = Level.ALL;
+      // Logger.root.level = Level.ALL;
     });
 
     test('create dictionary by adding characters together', () {
       var d = empty + simple + filled + charA + allchar;
       expect(d.length, 2);
-      expect(simple.exact(d[0]!), true);
-      expect(filled.exact(d[0]!), false);
+      expect(simple.exact(d[0]), true);
+      expect(filled.exact(d[0]), false);
       expect(() => allchar + '', throwsUnsupportedError);
     });
 
@@ -80,6 +80,7 @@ void main() {
       expect(empty.isEmpty, true);
       expect(empty.get('english'), null);
       expect(empty.contains('simplified'), true);
+      print([empty['pinyin']]);
     });
 
     test('comparing characters', () {
@@ -310,24 +311,45 @@ void main() {
     });
 
     test('use text modifier', () {
+      // Logger.root.level = Level.WARNING;
       empty.update({'simplified': '八 abc'});
-      expect(empty.modify('simplified').findFirstChar('chinese').result, '八');
-      expect(empty.modify('simplified').findFirstChar('english').result, 'abc');
+      expect(empty['simplified'], '八 abc');
+      empty.modify('simplified').findFirstChar('chinese');
+      expect(empty['simplified'], '八');
+      empty.modify('simplified').findFirstChar('english');
+      expect(empty['simplified'], '');
+
+      empty.update({'pinyin': 'ba1'});
+      expect(empty['pinyin'], 'ba1');
+      empty.modify('pinyin', transform: false).toToneMarkedPinyin();
+      expect(empty['pinyin'], 'ba1');
+      empty.modify('pinyin', transform: true).toToneMarkedPinyin();
+      expect(empty['pinyin'], 'bā');
+
+      expect(empty['simplified'], '');
       expect(() => empty.modify('test'), throwsArgumentError);
-      empty.modify('simplified').removeSyntax();
-      empty.modify('simplified').removeSyntax();
-      // expect(() => empty.modify('simplified').removeSyntax(), throwsArgumentError);
+      empty.modify('simplified').set('HaHa').removeSyntax();
+      expect(empty['simplified'], 'HaHa');
+      empty.modify('simplified').replaceAll('Ha', 'X');
+      expect(empty['simplified'], 'XX');
+
+      expect(char['images']['a'], 'test');
+      char.modify('images').replaceAll(r'\w+', 'X');
+      expect(char['images'], {'a': 'X'});
     });
 
     test('use info to show character data', () {
       expect(() => filled.info(), returnsNormally);
+      print(filled.toMarkdownTable());
     });
 
     test('base categories have to be strings', () {
+      final chtest = Character(baseCategories: ['test'], specs: {'test': int});
       expect(
-        () => Character(baseCategories: ['test'], specs: {'test': int}),
-        throwsArgumentError,
+        () => chtest.set('test',0,force: false),
+        throwsA(isA<TypeError>()),
       );
+      expect(chtest.categories['test'], String);
       expect(Character(baseCategories: ['test'])['test'], '');
     });
 
@@ -342,7 +364,8 @@ void main() {
 
       char.addSyntax(syntax, colors, mapColorFav: faves);
       var newChar = char.copyWith({'test': '八 [ba1]'}, merge: false);
-      expect(newChar.modify('test').act.linkPinyin().result, '八 [ba1]');
+      expect(newChar.modify('test',transform: true).linkPinyin().result, '八 [ba1]');
+      expect(newChar['test'],'八 [ba1]');
     });
   });
 }

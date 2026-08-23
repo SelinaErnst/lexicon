@@ -3,6 +3,8 @@ import 'package:lexicon/lexicon.dart';
 import 'package:lexicon/lexicon/dictionary.dart';
 import 'package:lexicon/lexicon/rule.dart';
 import 'package:logging/logging.dart';
+import 'dart:io';
+import 'helper.dart';
 
 void main() {
   setUpAll(() {
@@ -10,7 +12,7 @@ void main() {
     Logger.root.onRecord.listen((record) {
       print('[${record.level.name}] (${record.loggerName}): ${record.message}');
     });
-    Logger.root.level = Level.ALL;
+    // Logger.root.level = Level.ALL;
   });
 
   group('Dictionary', () {
@@ -24,19 +26,24 @@ void main() {
     late Dictionary emptyD;
     late ChDictionary emptyChD;
     late ChDictionary filledChD;
-    late ChDictionary filledD;
+    late ChDictionary exampleChD;
+    late Dictionary filledD;
 
-    setUp(() {
+    setUp(() async {
       Logger.root.level = Level.OFF;
       emptyD = Dictionary();
       emptyChD = ChDictionary();
+      exampleChD = ChDictionary();
 
-      empty = Character();
+      empty = Character(strict: false);
       char = ChCharacter(entry: {'simplified': '八', 'pinyin': 'bā'});
-      //   // char.copy().update(entry)
-      //   char.copy;
+
       charA = char.copyWith({'simplified': 'a', 'pinyin': 'b'});
-      charB = char.copyWith({'simplified': 'b', 'pinyin': 'c'});
+      charB = char.copyWith({
+        'simplified': 'b',
+        'pinyin': 'c',
+        'traditional': '八',
+      });
       charC = char.copyWith({'simplified': 'c', 'pinyin': 'c'});
 
       rule = Rule();
@@ -47,12 +54,14 @@ void main() {
         characters: [empty, char, charA, charC, charB],
       );
 
-      filledD = ChDictionary(
+      filledD = Dictionary(
         name: 'D',
         rules: [rule],
         characters: [empty, char, charA, charC, charB],
       );
-      Logger.root.level = Level.ALL;
+      exampleChD = await getExample() as ChDictionary;
+
+      // Logger.root.level = Level.FINE;
     });
 
     group('Dictionary attributes', () {
@@ -63,6 +72,7 @@ void main() {
         expect(emptyD.sortingOrd, '');
         expect(emptyD.characters.length, 0);
         expect(emptyD.rules.length, 0);
+        expect(emptyD.toString(), 'Dict <>: 0 (depth)');
       });
 
       test('empty ChDictionary', () {
@@ -76,99 +86,386 @@ void main() {
 
       test('filled ChDictionary', () {
         expect(filledChD.name, 'D');
+        expect(filledChD.toString().startsWith('Dict <D>'), true);
         expect(filledChD.categories.isEmpty, true);
         expect(filledChD.sortingKey, 'pinyin');
         expect(filledChD.sortingOrd, 'ascending');
         expect(filledChD.characters.length, 4);
         expect(filledChD.rules.length, 0);
-
-        print(filledD[0]);
-      });
-
-      group('changing attributes', () {
-        test('categories', () {
-          emptyD.categories = {'best': 'str'};
-          expect(
-            () => emptyD.categories.addAll({'test': String}),
-            throwsUnsupportedError,
-          );
-        });
-        test('characters', () {
-          emptyChD.characters += [empty, char, charA, charC, charB];
-          expect(emptyChD.length, 4);
-          emptyChD.characters = [
-            {'simplified': 'test'},
-          ];
-          expect(emptyChD.length, 1);
-          var testchar = emptyChD[0]!;
-          expect(testchar.runtimeType, ChCharacter);
-          // print(testchar.uniqueID());
-        });
+        expect(
+          filledChD.hashCodeFormatted.length,
+          emptyChD.hashCodeFormatted.length,
+        );
       });
     });
 
-    // test('create copy', () {
-    //   var copy = emptyChD.copyWith(name: 'Test');
-    //   expect(copy.name, 'Test');
-    //   expect(emptyChD == copy, false);
-    // });
+    group('changing attributes', () {
+      test('rename dictionary', () {
+        emptyD.name = 'test';
+        expect(emptyD.name, 'test');
+        emptyD.rename('emptyD');
+        expect(emptyD.name, 'emptyD');
+      });
+      test('categories', () {
+        // Logger.root.level = Level.ALL;
+        emptyD.categories = {'best': 'str'};
+        expect(
+          () => emptyD.categories.addAll({'test': String}),
+          throwsUnsupportedError,
+        );
+      });
 
-    // test('initializing populated', () {
-    //   expect(filledChD.length, 4);
-    //   // expect(filled.createInstance().length, 0);
+      test('rules', () {
+        // Logger.root.level = Level.OFF;
+        rule.update({'level': 'A1'});
+        var newRule = rule.copyWith({'level': 'B1'});
+        emptyD.rules += [rule, rule, newRule];
+        expect(emptyD.rules.length, 2);
+        emptyD.rules = [
+          {'level': 'A1'},
+          {'level': 'A2'},
+          {'level': 'C1'},
+          {'level': 'C2'},
+        ];
+        emptyD.add(newRule);
+        var copy = emptyD.copy();
+        expect(emptyD.rules.length, 5);
+        emptyD.rules = newRule;
+        expect(emptyD.rules.length, 1);
+        expect(emptyD.copyWith(rules: copy).rules.length, 5);
+        expect(emptyD.copyWith(rules: emptyD).rules.length, 1);
 
-    //   expect(filledChD[0], filledChD[['a', '', 'b']]);
-    //   expect(
-    //     filledChD.search(pattern: 'c', categories: ['simplified']).length,
-    //     1,
-    //   );
-    // });
+        emptyD.rules = copy;
+        expect(emptyD.rules.length, 5);
+        emptyD.rules = null;
+        expect(emptyD.rules.length, 0);
+        expect(() => emptyChD.rules = 0, throwsUnsupportedError);
+      });
 
-    // test('Mixed character types are not possible for ChDictionary', () {
-    //   expect(filledChD.length, 4);
-    //   filledChD.add(empty.copyWith({'simplified': 'test'}));
-    //   expect(filledChD.length, 4);
-    // });
+      test('characters', () {
+        // Logger.root.level = Level.FINER;
+        emptyD.characters += [
+          empty, // Character
+          charA,
+          charC,
+          charB,
+          rule.copyWith({'level': 'TEST'}),
+        ];
+        emptyD.add(char);
+        expect(emptyD.length, 4);
+        expect(emptyD[0].runtimeType, ChCharacter);
 
-    // test('Mixed character types for Dictionary', () {
-    //   expect(emptyD.length, 0);
-    //   emptyD.add(char);
-    //   expect(emptyD.length, 1);
-    //   var emptyRelaxed = empty.relax().copyWith({'simplified': 'test'});
-    //   emptyD.add(emptyRelaxed);
-    //   expect(emptyRelaxed.isEmpty, true);
-    //   expect(emptyD.length, 1);
+        emptyChD.characters = [
+          {'simplified': 'test'},
+        ];
+        expect(emptyChD.length, 1);
+        expect(emptyChD[0].runtimeType, ChCharacter);
 
-    //   expect(char.runtimeType, ChCharacter);
-    //   expect(() => char['test'] = null, throwsArgumentError);
+        emptyChD.characters = [
+          {'simplified': 'test'},
+        ];
+        expect(emptyChD.length, 1);
+        expect(emptyChD[0].runtimeType, ChCharacter);
 
-    //   var charRelaxed = char.relax();
-    //   emptyD.add(charRelaxed);
-    //   expect(emptyD.length, 1);
+        emptyD.characters = emptyChD;
+        expect(emptyD[0].runtimeType, ChCharacter);
+        expect(emptyChD.length, 1);
 
-    //   expect(charRelaxed.runtimeType, Character);
-    //   charRelaxed['test'] = null;
-    //   expect(charRelaxed.categories.containsKey('test'), true);
-    // });
+        emptyD.add({'id': 'A'});
+        emptyD.baseCategories = ['id'];
+        emptyD.add({'id': 'B'});
+        emptyD.baseCategories = ['id', 'test'];
+        emptyD.add([
+          {'id': 'C'},
+          {'id': 'D'},
+        ]);
+        expect(emptyD.length, 4);
 
-    // test('sorting and combining', () {
-    //   filledChD.sortingKey = 'pinyin';
-    //   filledChD.sortingOrd = 'descending';
-    //   expect(filledChD[3], filledChD[['a', '', 'b']]);
-    //   print(filledChD.search(pattern: "c"));
-    //   expect((filledChD.getSubset([0, 2]) + filledChD[3]).length, 3);
-    //   expect(
-    //     (filledChD[3]! + filledChD.getSubset([0, 2]) - filledChD[3]).length,
-    //     2,
-    //   );
-    // });
+        emptyChD.characters = null;
+        expect(emptyChD.length, 0);
 
-    // test('search', () {
-    //   expect(filledChD.search(pattern: 'c').length, 2);
-    //   expect(
-    //     filledChD.search(pattern: 'c', categories: ['simplified']).length,
-    //     1,
-    //   );
-    // });
+        expect(() => emptyChD.characters = 0, throwsUnsupportedError);
+        expect(
+          () => emptyChD.characters = [
+            {'simplified': 'test'},
+            0,
+          ],
+          throwsUnsupportedError,
+        );
+      });
+    });
+
+    group('type switching', () {
+      ChCharacter chC = ChCharacter();
+      Character sC = Character(strict: true, baseCategories: ['id']);
+      Character nC = Character(strict: false);
+      ChDictionary chD = ChDictionary(name: 'ChD');
+      Dictionary nD = Dictionary(name: 'nD');
+
+      test('ChDictionary will only have ChCharacter', () {
+        final exampleCharacters = [
+          chC,
+          chC.copyWith({'simplified': 'a'}), // #stays
+          chC.copyWith({
+            'simplified': 'a',
+            'images': {'i': 'i'},
+          }),
+          chC.copyWith({'simplified': 'a', 'pinyin': 'a'}), // #stays
+          nC,
+          sC.copyWith({'id': 'A'}),
+          nC.copyWith({'id': 'B'}),
+          nC.reconfigure(baseCategories: ['id']).copyWith({'id': 'C'}),
+        ];
+        // print(exampleCharacters);
+        chD.characters = exampleCharacters;
+        nD.characters = exampleCharacters;
+        expect(chD.length, 2);
+        expect(nD.length, 4);
+
+        emptyD.add(chD);
+        expect(emptyD.length, 2);
+        emptyD.add(nD);
+        expect(emptyD.length, 4);
+        emptyChD.add(nD);
+        print(emptyChD);
+        expect(emptyChD.length, 2);
+      });
+
+      test('ChDictionary will create ChCharacter', () {
+        final exampleCharacters = [
+          {'id': 'A'},
+          {'simplified': 'a'}, // #stays
+          {'simplified': 'b', 'pinyin': 'b'}, // #stays
+          sC.copyWith({'id': 'B'}),
+        ];
+        chD.characters = exampleCharacters;
+        nD.characters = exampleCharacters;
+        expect(chD.length, 2);
+        expect(nD.length, 1);
+      });
+
+      test('Dictionaries assigned to characters', () {
+        // expect(emptyChD.copyWith(characters: emptyD).length, 2);
+        // expect(
+        //   emptyChD
+        //       .copyWith(characters: emptyD)
+        //       .map((e) => e.runtimeType)
+        //       .toList(),
+        //   [ChCharacter, ChCharacter],
+        // );
+        // expect(
+        //   emptyD
+        //       .copyWith(characters: emptyD)
+        //       .map((e) => e.runtimeType)
+        //       .toList(),
+        //   [ChCharacter, Character],
+        // );
+        // expect(
+        //   emptyD
+        //       .copyWith(characters: emptyChD)
+        //       .map((e) => e.runtimeType)
+        //       .toList(),
+        //   [ChCharacter],
+        // );
+        // expect(emptyChD.copyWith(characters: emptyD)[1].runtimeType, Character);
+      });
+    });
+
+    group('comparisons', () {
+      test('compare empty dictionaries', () {
+        expect(emptyChD == emptyChD, true);
+        expect(emptyChD == emptyD, true);
+        expect(emptyChD == filledChD, false);
+        filledChD.empty(keepRules: false);
+        filledChD.rename('');
+        expect(emptyChD == filledChD, true);
+      });
+
+      test('compare dictionaries with different names', () {
+        // Logger.root.level = Level.ALL;
+
+        var reconfigured = filledChD.reconfigure(
+          name: 'reconfigured',
+          categories: {'test': String},
+        );
+        expect(filledChD == reconfigured, false);
+        expect(filledChD.characters == filledChD.characters, true);
+        var test = filledD.reconfigure(
+          categories: {
+            'simplified': String,
+            'traditional': String,
+            'pinyin': String,
+          },
+        );
+        expect(test == filledD, true);
+      });
+    });
+
+    group('subsetting and selecting', () {
+      test('get character by identifier', () {
+        expect(
+          filledChD[0] ==
+              filledD.sort(sortingKey: 'pinyin', sortingOrd: 'ascending')[0],
+          true,
+        );
+        expect(
+          filledChD[0],
+          filledD.sort(sortingKey: 'pinyin', sortingOrd: 'ascending')[0],
+        );
+        expect(filledChD[['a', '', 'b']], filledD[['a', '', 'b']]);
+        expect(filledChD[filledD[1]].identifier, ['a', '', 'b']);
+
+        expect(() => emptyChD[100], throwsRangeError);
+        expect(() => emptyChD[['x', '', '']], throwsArgumentError);
+        expect(() => emptyChD[null], throwsArgumentError);
+      });
+
+      test('get dictionary from list of identifiers', () {
+        expect(
+          filledChD.getSubset([
+            ['a', '', 'b'],
+            ['b', '', 'c'],
+            1,
+            100,
+          ]).length,
+          2,
+        );
+        expect(filledChD.getSubset([3]), filledChD.getSlice(start: 3, stop: 4));
+      });
+
+      test('get dictionary from slice', () {
+        expect(filledChD.getSlice(start: 3).length, 1);
+        expect(filledChD.getSlice(start: 4, stop: 4).length, 0);
+        expect(filledChD.getSlice(stop: 1).length, 1);
+        expect(() => filledChD.getSlice(stop: 5), throwsArgumentError);
+      });
+
+      test('get dictionary by searching', () {
+        var test = Character(
+          entry: {
+            'simplified': 'x',
+            'pinyin': 'x',
+            'images': {'x': 'x'},
+          },
+          baseCategories: ['images'],
+          strict: false,
+        );
+        filledD.add(test);
+        expect(
+          filledD
+              .searchCategory(pattern: 'x', searchCategories: ['images'])
+              .length,
+          1,
+        );
+        expect(
+          filledChD.search(categories: ['pinyin'], pattern: 'c').length,
+          2,
+        );
+      });
+    });
+
+    group('+ / - operators', () {
+      test('addition and subtraction of characters', () {
+        // Logger.root.level = Level.OFF;
+        var combo1 = filledD[3] + filledD.getSlice(start: 1, stop: 2);
+        var combo2 = filledD.getSlice(start: 1, stop: 2) + filledD[3];
+        expect(combo1, combo2);
+        var combo =
+            filledD[3] + filledD.getSlice(stop: 2) + filledD[['八', '', 'ba1']];
+        expect(combo.length, 3);
+        expect((combo - filledD[0]).length, 2);
+
+        expect((filledD + emptyChD).length, filledD.length);
+        expect((filledD - combo1).length, 2);
+        expect(
+          (filledD + exampleChD.getSlice(start: 10, stop: 13)).length,
+          filledD.length + 3,
+        );
+        expect(
+          (exampleChD.getSlice(start: 10, stop: 13) + combo1 + filledD).length,
+          filledD.length + 3,
+        );
+
+        expect(() => filledD + ['a', '', 'a'], throwsUnsupportedError);
+        expect(() => filledD - ['a', '', 'a'], throwsUnsupportedError);
+
+        expect(() => filledD.add(0), throwsA(isA<UnsupportedError>()));
+        expect(() => filledD.remove(0), throwsA(isA<UnsupportedError>()));
+      });
+      test('addition and subtraction of rules', () {
+        filledChD.rules = [
+          {'level': 'A1'},
+          {'level': 'A2'},
+          {'level': 'C1'},
+          {'level': 'C2'},
+        ];
+        expect((filledChD + Rule(entry: {'level': 'B1'})).rules.length, 5);
+        expect((filledChD - Rule(entry: {'level': 'A1'})).rules.length, 3);
+      });
+    });
+
+    group('sorting', () {
+      test('sort characters by key and order', () {
+        // Logger.root.level = Level.OFF;
+        ChCharacter interest = filledChD[['b', '八', 'c']];
+        filledChD.sortingKey = 'pinyin';
+        expect(filledChD.characters.indexOf(interest), 2);
+        filledChD.sortingKey = 'simplified';
+        expect(filledChD.characters.indexOf(interest), 1);
+        filledChD.sortingKey = 'traditional';
+        expect(filledChD.characters.indexOf(interest), 3);
+        filledChD.sortingOrd = 'descending';
+        expect(filledChD.characters.indexOf(interest), 0);
+        expect(() => filledChD.sortingKey = 'test', throwsArgumentError);
+        expect(() => filledChD.sortingOrd = 'test', throwsArgumentError);
+
+        var test1 = filledD.sort(sortingKey: 'pinyin', sortingOrd: 'ascending');
+        var test2 = filledD.sort(
+          sortingKey: 'simplified',
+          sortingOrd: 'ascending',
+        );
+
+        expect(
+          () => filledD.reorder(sortingKey: 'abc', sortingOrd: 'ascending'),
+          throwsArgumentError,
+        );
+
+        expect(test1.characters.indexOf(interest), 3);
+        expect(test2.characters.indexOf(interest), 1);
+      });
+
+      group('reading from file', () {
+        test('read jsonl', () async {
+          // Logger.root.level = Level.OFF;
+          ChDictionary chd = ChDictionary();
+          final categories = getCategories();
+
+          await chd.read(File('assets/MCD.jsonl'), categories: categories);
+          print(chd.search(pattern: 'ba'));
+          print(chd[0].images());
+        });
+      });
+
+      test('example dictionary', () {
+        // Logger.root.level = Level.OFF;
+        // exampleChD.reorder(sortingKey: 'traditional', sortingOrd: 'descending');
+        // exampleChD.reorder(sortingKey: 'traditional', sortingOrd: 'ascending');
+        // exampleChD.reorder(sortingKey: 'simplified', sortingOrd: 'ascending');
+        exampleChD.reorder(sortingKey: 'pinyin', sortingOrd: 'ascending');
+        // print(exampleChD.getSubset([2, 5, 7, 9, 11]));
+        // print(exampleChD.getSubset([2,9,5]) + exampleChD.getSubset([11,7]));
+
+        expect(exampleChD[0]['english'], ['eight', '8']);
+        expect(
+          exampleChD
+              .search(pattern: "eight", exact: true, categories: ['english'])
+              .length,
+          1,
+        );
+        expect(exampleChD.search(pattern: "ba1", exact: true).length, 2);
+        expect(exampleChD.search(pattern: "gan1", exact: true).length, 2);
+        expect(exampleChD.search(pattern: "gan1", exact: false).length, 3);
+      });
+    });
   });
 }

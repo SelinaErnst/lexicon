@@ -40,12 +40,12 @@ final catMap = readJSONSync(File('assets/categories.json'))!;
 <!-- ––––––––––––––––––––––– config files –––––––––––––––––––––––– -->
 
 <!-- –––––––––––––––––––––– dictionary init –––––––––––––––––––––– -->
-Dictionary dictionary = Dictionary();
+ChDictionary dictionary = ChDictionary();
 dictionary.addSyntax(synatxMap, colorMap);
 dictionary.read(File('assets/MCD.jsonl'), catMap);
 <!-- –––––––––––––––––––––– dictionary init –––––––––––––––––––––– -->
 
-dictionary[List.generate(10, (index) => index)])
+dictionary.getSlice(stop: 10);
 ```
 ```
 Dict <>: 10 (depth)
@@ -63,7 +63,7 @@ Dict <>: 10 (depth)
 Examine character in dictionary:
 
 ```
-dictionary['ri4'][0].info()
+dictionary.search(pattern: 'ri4')[0];
 ```
 
 ```
@@ -98,6 +98,32 @@ dictionary['ri4'][0].info()
 |                      | - https://img.zdic.net/zy/jiaguwen/42_ED55.svg
 |                      | - https://ziphoenicia-1300189285.cos.ap-shanghai.myqcloud.com/swjz/4767.svg
 ```
+```
+char.toMarkdownTable();
+```
+
+|  Category | Value  |
+|  :--- | :---  |
+| **SIMPLIFIED** | 日 |
+| **TRADITIONAL** |  |
+| **PINYIN** | ri4 |
+| **ENGLISH** | • &nbsp;sun, solar<br>• &nbsp;day, daytime<br>• &nbsp;ervery day, daily<br>• &nbsp;Japan<br>• &nbsp;season |
+| **GERMAN** | • &nbsp;Sonne<br>• &nbsp;Tag<br>• &nbsp;Japan |
+| **RADICAL** | • &nbsp;KangXi 72: sun |
+| **OPPOSITE** | • &nbsp;夜 [yè] |
+| **CONFUSABLES** | • &nbsp;曰 [yuē]<br>• &nbsp;白 [bái]<br>• &nbsp;臼 [jiù] |
+| **GRAMMAR** | • &nbsp;＿年＿月＿日 |
+| **STROKES** | 񃘽 񃘾 񃘿 񃙀 |
+| **STROKES_COUNT** | 4 |
+| **MNEMONICS** | • &nbsp;The sun tells what time of day it is. Japan is the land of the rising sun. |
+| **USAGE** | • &nbsp;heat<br>• &nbsp;light<br>• &nbsp;(period of) time |
+| **ORIGIN** | 日 depicts the sun. The character was originally a circle, but because it's not easy to inscribe on oracle bones, the character may have been changed to a square shape. The dot in 日 is to avoid confusion with 囗. |
+| **ANCIENT** | • &nbsp;񃘻 |
+| **RELATIVES** | • &nbsp;明 [míng]<br>• &nbsp;的 [de]<br>• &nbsp;时 [shí] |
+| **WORDS** | • &nbsp;生日 [shēngri] |
+| **LINKS** | • &nbsp;https://zi.tools/zi/日 |
+| **URLS** | • &nbsp;<br>• &nbsp;https://img.zdic.net/zy/jiaguwen/42_ED55.svg<br>• &nbsp;https://ziphoenicia-1300189285.cos.ap-shanghai.myqcloud.com/swjz/4767.svg |
+
 ## Additional information
 
 This is an attempt of recreating an existing [app](https://github.com/SelinaErnst/ChineseDictionary) that was written in Python.   

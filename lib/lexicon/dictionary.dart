@@ -52,13 +52,15 @@ String? getExt(
   return matchEntry!.key;
 }
 
-class Dictionary extends Iterable<Character> {
+// class Dictionary extends Iterable<Character> {
+class Dictionary<C extends Character> extends Iterable<C> {
   late String name;
-  late List<Character> _characters;
-  late List<Rule> _rules;
+
+  late List<C> _characters;
+  List<Rule> _rules;
 
   Set<String> get _sortKeys => const {};
-  Set<String> get _sortOrder => const {'ascending'};
+  Set<String> get _sortOrder => const {'ascending', 'descending'};
 
   late String _sortKey;
   late String _sortOrd;
@@ -66,6 +68,8 @@ class Dictionary extends Iterable<Character> {
   late Map<String, dynamic>? _mapSyntax;
   late Map<String, dynamic>? _mapColor;
   late Map<String, dynamic>? _mapColorFav;
+
+  List<String> baseCategories;
 
   Map<String, Type> _categories = {};
 
@@ -78,158 +82,103 @@ class Dictionary extends Iterable<Character> {
     dynamic characters,
     dynamic rules,
     Map<String, Type> categories = const {},
+    List<String>? baseCategories,
     String? sortingKey,
     String? sortingOrd,
-  }) : name = name ?? '' {
+  }) : name = name ?? '',
+       _rules = [],
+       baseCategories = baseCategories ?? [],
+       _sortKey = sortingKey ?? '',
+       _sortOrd = sortingOrd ?? '' {
     this.categories = categories;
-    _sortKey = sortingKey ?? '';
-    _sortOrd = sortingOrd ?? '';
+    addSyntax(null, null);
     _setCharacters(characters);
     _setRules(rules);
-    sort();
+    reorder();
 
     _log.info(
       'Successfully created: Dict <$name>: ${this.characters.length} (depth)',
     );
   }
 
-  @protected
-  Dictionary createInstance({
-    String? name,
-    dynamic characters,
-    dynamic rules,
-    Map<String, Type>? categories,
-    String? sortingKey,
-    String? sortingOrd,
-  }) {
-    _log.finer(
-      'Create instance of Dictionary $_headString with other characters.',
-    );
-    return Dictionary(
-      name: name ?? this.name,
-      characters: characters,
-      rules: rules ?? this.rules.map((rule) => rule.copy()).toList(),
-      categories: categories ?? Map<String, Type>.from(_categories),
-      sortingKey: sortingKey ?? _sortKey,
-      sortingOrd: sortingOrd ?? _sortOrd,
-    );
-  }
-
-  Dictionary rename(String name) {
+  void rename(String name) {
     this.name = name;
-    return this;
-  }
-
-  Dictionary copy() {
-    _log.finest('Copy Dictionary $_headString.');
-    return createInstance(
-      characters: characters.map((char) => char.createInstance()).toList(),
-    );
-  }
-
-  Dictionary copyWith({String? name, Map<String, Type>? categories}) {
-    _log.finest('Copy Dictionary $_headString with different configuration.');
-    return createInstance(
-      name: name ?? this.name,
-      categories: categories ?? Map<String, Type>.from(_categories),
-      characters: characters.map((char) => char.createInstance()).toList(),
-    );
-  }
-
-  Dictionary empty({bool keepRules = true}) {
-    _log.fine('Empty Dictionary $_headString of all characters.');
-    _characters = [];
-    if (!keepRules) {
-      _log.fine('Empty Dictionary $_headString of all rules.');
-      _rules = [];
-    }
-    return this;
-  }
-
-  Map<String, Type> get categories => Map.unmodifiable(_categories);
-
-  set categories(Map<String, dynamic> newCategories) {
-    _log.info('Set categories to: ${newCategories.keys.join(', ')}');
-    _categories = newCategories.map((key, value) {
-      if (value is String && _mapTypes.containsKey(value)) {
-        return MapEntry(key, _mapTypes[value] as Type);
-      }
-      if (value is Type) {
-        return MapEntry(key, value);
-      }
-      return MapEntry(key, dynamic);
-    });
-  }
-
-  List<Character> get characters => _characters;
-
-  set characters(dynamic value) {
-    _setCharacters(value);
-    sort();
-  }
-
-  void _setCharacters(dynamic charList) {
-    if (charList is List) {
-      try {
-        charList = List<Character>.from(charList);
-        _characters = charList
-            .whereType<Character>()
-            .toSet()
-            .where((char) => !char.isEmpty)
-            .toList();
-      } catch (e) {
-        if (charList is Iterable) {
-          _characters = [];
-          for (final item in charList) {
-            final char = item as Map<String, dynamic>;
-            // print(Character(specs: {'simplified':String,'traditional':String,'pinyin':String}, entry: char));
-            final character = ChCharacter(entry: char);
-            if (!character.isEmpty) _characters.add(character);
-          }
-        }
-      }
-    } else if (charList is Dictionary) {
-      _characters = List.from(charList.characters);
-    } else if (charList is Character && !charList.isEmpty) {
-      _characters = [charList];
-    } else {
-      _characters = [];
-    }
-    _log.fine('Create Character List of Dictionary $_headString.');
-  }
-
-  List<Rule> get rules => _rules;
-
-  set rules(dynamic value) {
-    _setRules(value);
-  }
-
-  void _setRules(dynamic ruleList) {
-    _log.fine('Create Rule List of Dictionary $_headString.');
-    if (ruleList is List) {
-      _rules = ruleList
-          .whereType<Rule>()
-          .toSet()
-          .where((rule) => !rule.isEmpty)
-          .toList();
-    } else if (ruleList is Rule) {
-      _rules = [ruleList];
-    } else {
-      _rules = [];
-    }
   }
 
   /* ================================================================ */
   /*                           BASIC METHODS                          */
   /* ================================================================ */
 
-  /* ––––––––––––––––––– operators / magic methods –––––––––––––––––– */
+  String get headString => 'Dict <$name>: ${characters.length} (depth)';
 
-  String get _headString => 'Dict <$name>: ${characters.length} (depth)';
+  @override
+  Iterator<C> get iterator => characters.iterator;
+
+  @override
+  int get hashCode {
+    const charEquality = UnorderedIterableEquality<Character>();
+    const ruleEquality = UnorderedIterableEquality<Rule>();
+    return Object.hash(
+      name,
+      ruleEquality.hash(rules),
+      charEquality.hash(characters),
+    );
+  }
+
+  String get hashCodeFormatted {
+    return hashCode.toString().padLeft(10, '0');
+  }
+
+  @override
+  bool operator ==(Object other) {
+    _log.finer('Compare Dictionary $headString to ${other.runtimeType}');
+    if (identical(this, other)) return true;
+    if (other is! Dictionary) return false;
+    _log.finest(
+      'Compare Dictionary $headString to other Dictionary ${other.headString}',
+    );
+    const charEquality = UnorderedIterableEquality<Character>();
+    const ruleEquality = UnorderedIterableEquality<Rule>();
+    return name == other.name &&
+        ruleEquality.equals(rules, other.rules) &&
+        charEquality.equals(characters, other.characters);
+  }
+
+  C operator [](dynamic identifier) {
+    return getCharacter(identifier);
+  }
+
+  Dictionary operator -(dynamic other) {
+    _log.fine('Substract from Dictionary $headString');
+
+    if (other is! Character && other is! Dictionary) {
+      throw UnsupportedError(
+        'Subtraction is not supported for type ${other.runtimeType}',
+      );
+    }
+
+    var copyDict = copy();
+    copyDict.remove(other);
+    return copyDict;
+  }
+
+  Dictionary operator +(dynamic other) {
+    _log.fine('Add to Dictionary $headString');
+
+    if (other is! Character && other is! Dictionary) {
+      throw UnsupportedError(
+        'Addition is not supported for type ${other.runtimeType}',
+      );
+    }
+
+    var copyDict = copy();
+    copyDict.add(other, ordered: false);
+    return copyDict;
+  }
 
   @override
   String toString() {
-    final header = _headString;
+    final header = headString;
     if (characters.isEmpty) return header;
 
     final buffer = StringBuffer('$header\n');
@@ -244,206 +193,385 @@ class Dictionary extends Iterable<Character> {
     return convertMixedList(characters);
   }
 
-  @override
-  Iterator<Character> get iterator => characters.iterator;
-
-  @override
-  int get hashCode {
-    const charEquality = UnorderedIterableEquality<Character>();
-    const ruleEquality = UnorderedIterableEquality<Rule>();
-    return Object.hash(
-      name,
-      ruleEquality.hash(rules),
-      charEquality.hash(characters),
+  Dictionary getSlice({int? start, int? stop}) {
+    int startInt = start ?? 0;
+    int stopInt = stop ?? length;
+    if (stopInt <= length && startInt <= stopInt) {
+      return getSubset(
+        List.generate((stopInt - startInt), (i) => startInt + i),
+      );
+    }
+    throw ArgumentError(
+      'Dictionary $headString cannot be sliced by index [$startInt,$stopInt]',
     );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    _log.finer('Compare Dictionary $_headString to ${other.runtimeType}');
-    if (identical(this, other)) return true;
-    if (other is! Dictionary) return false;
-    _log.finest(
-      'Compare Dictionary $_headString to other Dictionary ${other._headString}',
-    );
-    const charEquality = UnorderedIterableEquality<Character>();
-    const ruleEquality = UnorderedIterableEquality<Rule>();
-    return name == other.name &&
-        ruleEquality.equals(rules, other.rules) &&
-        charEquality.equals(characters, other.characters);
-  }
-
-  Character? operator [](dynamic identifier) {
-    return getCharacter(identifier);
   }
 
   Dictionary getSubset(List<dynamic> identifier) {
-    _log.fine('Create Subset of Dictionary $_headString.');
+    _log.fine('Create Subset of Dictionary $headString.');
     final List<Character> matchingCharacters = [];
     for (final id in identifier) {
-      final Character? char = getCharacter(id);
-      if (char != null) matchingCharacters.add(char.copy());
+      try {
+        matchingCharacters.add(getCharacter(id).copy());
+      } catch (e) {
+        _log.finest('Character identifier not found in Dictionary: $id');
+      }
     }
     return createInstance(characters: matchingCharacters);
   }
 
-  Character? getCharacter(dynamic identifier) {
-    _log.fine(
+  C getCharacter(dynamic identifier) {
+    _log.finer(
       'Lookup character by identifier $identifier (Type: ${identifier.runtimeType}).',
     );
 
-    if (identifier == null) return null;
     if (identifier is int) return elementAt(identifier);
     if (identifier is Character && contains(identifier)) {
       return characters.firstWhere((char) => char == identifier);
     }
     if (identifier is List<String>) {
       const listEquality = ListEquality<dynamic>();
-      if (!_charactersID.containsElement(identifier)) return null;
+      if (!_charactersID.containsElement(identifier)) {
+        throw ArgumentError(
+          'Character was not found based on identifer: $identifier.',
+        );
+      }
       for (final char in characters) {
         if (listEquality.equals(char.identifier, identifier)) return char;
       }
     }
-    return null;
+    // return null;
+    throw ArgumentError(
+      'Invalid Type of identifier used for indexing: ${identifier.runtimeType}',
+    );
   }
 
-  Dictionary operator -(dynamic other) {
-    _log.fine('Substract from Dictionary $_headString');
-    final remainCharacters = List<Character>.from(characters);
-    final remainRules = List<Rule>.from(rules);
+  /* ================================================================ */
+  /*                              SYNTAX                              */
+  /* ================================================================ */
 
-    const listEquality = ListEquality<dynamic>();
-    final Set<dynamic> charactersIDSet = _charactersID;
-    final Set<Rule> rulesIDSet = rules.toSet();
+  void addSyntax(
+    Map<String, dynamic>? mapSyntax,
+    Map<String, dynamic>? mapColor, {
+    Map<String, dynamic>? mapColorFav,
+  }) {
+    _mapColor = mapColor;
+    _mapSyntax = mapSyntax;
+    _mapColorFav = mapColorFav;
+  }
 
-    if (other is Character && !other.isEmpty) {
-      if (charactersIDSet.containsElement(other.identifier)) {
-        remainCharacters.removeWhere(
-          (Character char) =>
-              listEquality.equals(char.identifier, other.identifier),
-        );
-      }
-    } else if (other is Rule && !other.isEmpty) {
-      if (rulesIDSet.containsElement(other)) {
-        remainRules.remove(other);
-      }
-    } else if (other is Dictionary) {
-      final otherIDs = other.characters.map((c) => c.identifier).toList();
-      remainCharacters.removeWhere(
-        (Character char) => otherIDs.containsElement(char.identifier),
-      );
-      remainRules.removeWhere((rule) => other.rules.contains(rule));
-    } else {
-      _log.warning(
-        'Subtraction Ignored: Unsupported type ${other.runtimeType}',
+  /* ================================================================ */
+  /*                            CATEGORIES                            */
+  /* ================================================================ */
+
+  Map<String, Type> get categories => Map.unmodifiable(_categories);
+
+  set categories(Map<String, dynamic> newCategories) {
+    if (newCategories.isNotEmpty) {
+      _log.finer(
+        'Set new categories with keys: ${newCategories.keys.join(', ')}',
       );
     }
-    return createInstance(characters: remainCharacters, rules: remainRules);
+    _categories = newCategories.map((key, value) {
+      if (value is String && _mapTypes.containsKey(value.toLowerCase())) {
+        return MapEntry(key, _mapTypes[value.toLowerCase()] as Type);
+      }
+      if (value is Type) {
+        return MapEntry(key, value);
+      }
+      return MapEntry(key, dynamic);
+    });
   }
 
-  Dictionary operator +(dynamic other) {
-    _log.fine('Add to Dictionary $_headString');
-    final comboCharacters = List<Character>.from(characters);
-    final comboRules = List<Rule>.from(rules);
+  /* ================================================================ */
+  /*                        CHARACTERS & RULES                        */
+  /* ================================================================ */
 
-    final Set<dynamic> charactersIDSet = _charactersID;
-    final Set<Rule> rulesIDSet = rules.toSet();
+  List<C> get characters => _characters;
 
-    if (other is Character && !other.isEmpty) {
-      if (!charactersIDSet.containsElement(other.identifier)) {
-        comboCharacters.add(other);
-      } else {
-        _log.finer(
-          'Add Ignored: Character $other is either empty or exists already.',
-        );
-      }
-    } else if (other is Rule && !other.isEmpty) {
-      if (!rulesIDSet.containsElement(other)) {
-        comboRules.add(other);
-      } else {
-        _log.finer(
-          'Addition Ignored: Rule $other is either empty or exists already.',
-        );
-      }
-    } else if (other is Dictionary) {
-      for (final char in other.characters) {
-        if (charactersIDSet.add(char.identifier) && !char.isEmpty) {
-          comboCharacters.add(char);
-        } else {
-          _log.finer(
-            'Addition Ignored: Character $char is either empty or exists already.',
-          );
-        }
-      }
-      for (final rule in other.rules) {
-        if (rulesIDSet.add(rule) && !rule.isEmpty) {
-          comboRules.add(rule);
-        } else {
-          _log.finer(
-            'Addition Ignored: Rule $rule is either empty or exists already.',
-          );
-        }
-      }
-    } else {
-      _log.warning('Addition Failed: Unsupported type ${other.runtimeType}');
-      throw UnsupportedError(
-        'Addition is not supported for type ${other.runtimeType}',
-      );
-    }
-    return createInstance(characters: comboCharacters, rules: comboRules);
-  }
-
-  Dictionary add(dynamic other) {
-    _log.fine('Add to Dictionary $_headString');
-    // adds to current dictionary
-    // but without creating a new instance and without sorting
-
-    final Set<dynamic> charactersIDSet = _charactersID;
-    final Set<Rule> rulesIDSet = rules.toSet();
-
-    if (other is Character && !other.isEmpty) {
-      if (!charactersIDSet.containsElement(other.identifier)) {
-        characters.add(other);
-      } else {
-        _log.finer(
-          'Add Ignored: Character $other is either empty or exists already.',
-        );
-      }
-    } else if (other is Rule && !other.isEmpty) {
-      if (!rulesIDSet.containsElement(other)) {
-        rules.add(other);
-      } else {
-        _log.finer(
-          'Addition Ignored: Rule $other is either empty or exists already.',
-        );
-      }
-    } else if (other is Dictionary) {
-      for (final char in other.characters) {
-        if (charactersIDSet.add(char.identifier) && !char.isEmpty) {
-          characters.add(char);
-        } else {
-          _log.finer(
-            'Addition Ignored: Character $char is either empty or exists already.',
-          );
-        }
-      }
-      for (final rule in other.rules) {
-        if (rulesIDSet.add(rule) && !rule.isEmpty) {
-          rules.add(rule);
-        } else {
-          _log.finer(
-            'Addition Ignored: Rule $rule is either empty or exists already.',
-          );
-        }
-      }
-    } else {
-      _log.warning('Addition Ignored: Unsupported type ${other.runtimeType}');
-    }
-    return this;
-  }
+  List<Rule> get rules => _rules;
 
   Set<dynamic> get _charactersID =>
       characters.map((char) => char.identifier).toSet();
+
+  Set<dynamic> get _rulesID => rules.toSet();
+
+  set characters(dynamic value) {
+    _setCharacters(value);
+    reorder();
+  }
+
+  set rules(dynamic value) => _setRules(value);
+
+  C _listItem({Map<String, dynamic> entry = const {}}) {
+    // final chCat = ['simplified', 'traditional', 'pinyin'];
+
+    return Character(
+          strict: false,
+          baseCategories: baseCategories,
+          specs: categories,
+          entry: entry,
+          mapSyntax: _mapSyntax,
+          mapColor: _mapColor,
+          mapColorFav: _mapColorFav,
+        )
+        as C;
+  }
+
+  C _convertListItem(dynamic entry) {
+    C character;
+    if (entry is Map<String, dynamic>) {
+      character = _listItem(entry: entry);
+    } else if (entry is Character) {
+      try {
+        character = entry as C;
+      } catch (e) {
+        character = _listItem(entry: entry.data);
+      }
+    } else {
+      throw UnsupportedError(
+        'Cannot convert $entry to $C. Unsupported type: ${entry.runtimeType}',
+      );
+    }
+    return character;
+  }
+
+  Rule _convertRuleItem(dynamic entry) {
+    Rule rule;
+    if (entry is Map<String, dynamic>) {
+      rule = Rule(
+        entry: entry,
+        mapSyntax: _mapSyntax,
+        mapColor: _mapColor,
+        mapColorFav: _mapColorFav,
+      );
+    } else if (entry is Rule) {
+      rule = entry;
+    } else {
+      throw UnsupportedError(
+        'Cannot convert $entry to Rule. Unsupported type: ${entry.runtimeType}',
+      );
+    }
+    return rule;
+  }
+
+  void _addCharacter(dynamic entry) {
+    final C character = _convertListItem(entry);
+    if (character.isNotEmpty &&
+        !_charactersID.containsElement(character.identifier)) {
+      characters.add(character);
+    } else {
+      _log.finest(
+        'Addition Ignored: Character $character is either empty or exists already.',
+      );
+    }
+  }
+
+  void _rmCharacter(dynamic entry) {
+    final C character = _convertListItem(entry);
+    final listEquality = ListEquality<dynamic>();
+    if (character.isNotEmpty &&
+        _charactersID.containsElement(character.identifier)) {
+      characters.removeWhere(
+        (C char) => listEquality.equals(char.identifier, character.identifier),
+      );
+    } else {
+      _log.finest(
+        'Remove Ignored: Character $character is either empty or does not exist.',
+      );
+    }
+  }
+
+  void _addRule(dynamic entry) {
+    Rule rule = _convertRuleItem(entry);
+    if (!rule.isEmpty && !_rulesID.containsElement(rule)) {
+      _rules.add(rule);
+    }
+  }
+
+  void _rmRule(dynamic entry) {
+    Rule rule = _convertRuleItem(entry);
+    if (!rule.isEmpty && _rulesID.containsElement(rule)) {
+      _rules.remove(rule);
+    }
+  }
+
+  void _setCharacters(dynamic charList) {
+    if (charList is List) {
+      try {
+        charList = List<Character>.from(charList);
+        _characters = charList
+            .map((char) => _convertListItem(char))
+            .whereType<C>()
+            .toSet()
+            .where((char) => char.isNotEmpty && char is! Rule)
+            .toList();
+      } catch (e) {
+        if (charList is Iterable) {
+          _characters = [];
+          for (var item in charList) {
+            _addCharacter(item);
+          }
+        }
+      }
+    } else if (charList is Dictionary) {
+      // print(charList is Dictionary<C>);
+      // charList.characters.map((char) => );
+      // print(charList.characters);
+      // _characters = List.from(charList.characters);
+      charList = List<Character>.from(charList.characters);
+      _characters = charList.map((char) => _convertListItem(char)).toList();
+    } else if (charList is C && charList.isNotEmpty) {
+      _characters = [charList];
+    } else if (charList == null) {
+      _characters = [];
+    } else {
+      throw UnsupportedError(
+        'Unsupported type for set up of dictionary characters: ${charList.runtimeType}',
+      );
+    }
+
+    _log.fine('Create Character List of Dictionary $headString.');
+  }
+
+  void setLinkedRule(Rule rule) => _rules = [rule];
+
+  void _setRules(dynamic ruleList) {
+    _log.fine('Create Rule List of Dictionary $headString.');
+    if (ruleList is List) {
+      try {
+        ruleList = List<Rule>.from(ruleList);
+        _rules = ruleList
+            .whereType<Rule>()
+            .toSet()
+            .where((rule) => !rule.isEmpty)
+            .toList();
+      } catch (e) {
+        if (ruleList is Iterable) {
+          _log.finest('Use List of Maps to define rules.');
+          _rules = [];
+          for (final item in ruleList) {
+            _addRule(item as Map<String, dynamic>);
+          }
+        }
+      }
+    } else if (ruleList is Rule) {
+      _rules = [ruleList];
+    } else if (ruleList is Dictionary) {
+      _rules = List.from(ruleList.rules);
+    } else if (ruleList == null) {
+      _rules = [];
+    } else {
+      throw UnsupportedError(
+        'Unsupported type for set up of dictionary characters: ${ruleList.runtimeType}',
+      );
+    }
+  }
+
+  void remove(dynamic other) {
+    if (other is Rule) {
+      _rmRule(other);
+    } else if (other is Character) {
+      _rmCharacter(other);
+    } else if (other is Dictionary) {
+      if (other.isEmpty) return;
+      final otherIDs = other.characters.map((c) => c.identifier).toList();
+      characters.removeWhere(
+        (C char) => otherIDs.containsElement(char.identifier),
+      );
+      // rules.removeWhere((rule) => other.rules.contains(rule));
+    } else {
+      _rmCharacter(other);
+    }
+  }
+
+  void add(dynamic other, {bool ordered = true}) {
+    _log.fine('Add ${other.runtimeType} to Dictionary $headString');
+    // adds to current dictionary
+    // but without creating a new instance and without sorting
+
+    if (other is Rule) {
+      if (other.isEmpty || _rulesID.containsElement(other)) {
+        _log.finer(
+          'Addition Ignored: Rule $other is either empty or exists already.',
+        );
+      } else {
+        _addRule(other);
+      }
+    } else if (other is Character) {
+      _addCharacter(other);
+    } else if (other is Dictionary) {
+      if (other.isEmpty) return;
+      for (final char in other.characters) {
+        _addCharacter(char);
+      }
+      // for (final rule in other.rules) {
+      //   _addRule(rule);
+      // }
+    } else if (other is List) {
+      final cached = _characters;
+      _setCharacters(other);
+      _characters += cached;
+    } else {
+      _addCharacter(other);
+    }
+    if (ordered) reorder();
+  }
+
+  /* ================================================================ */
+  /*                               COPY                               */
+  /* ================================================================ */
+
+  @protected
+  Dictionary createInstance({
+    String? name,
+    dynamic characters,
+    dynamic rules,
+    Map<String, Type>? categories,
+    String? sortingKey,
+    String? sortingOrd,
+  }) {
+    _log.finer(
+      'Create instance of Dictionary $headString with other characters.',
+    );
+    return Dictionary(
+      name: name ?? this.name,
+      characters:
+          characters ?? this.characters.map((C char) => char.copy()).toList(),
+      rules: rules ?? this.rules.map((rule) => rule.copy()).toList(),
+      categories: categories ?? Map<String, Type>.from(_categories),
+      sortingKey: sortingKey ?? _sortKey,
+      sortingOrd: sortingOrd ?? _sortOrd,
+    );
+  }
+
+  Dictionary copy() {
+    _log.finest('Copy Dictionary $headString.');
+    return createInstance();
+  }
+
+  Dictionary reconfigure({String? name, Map<String, Type>? categories}) {
+    _log.finest('Copy Dictionary $headString with different configuration.');
+    return createInstance(
+      name: name ?? this.name,
+      categories: categories ?? Map<String, Type>.from(_categories),
+    );
+  }
+
+  Dictionary copyWith({dynamic characters, dynamic rules, bool merge = false}) {
+    _log.finest(
+      'Copy Dictionary $headString with different characters / rules.',
+    );
+    return createInstance(characters: characters, rules: rules);
+  }
+
+  void empty({bool keepRules = true}) {
+    _log.fine('Empty Dictionary $headString of all characters.');
+    _characters = [];
+    if (!keepRules) {
+      _log.fine('Empty Dictionary $headString of all rules.');
+      _rules = [];
+    }
+  }
 
   /* ================================================================ */
   /*                              SORTING                             */
@@ -454,48 +582,62 @@ class Dictionary extends Iterable<Character> {
 
   set sortingKey(String key) {
     _log.config('Set sorting key to $key');
+    if (_sortKeys.isNotEmpty) {
+      isValid(key, _sortKeys, funcName: 'set sortingKey', argName: 'key');
+    }
     key = key.toLowerCase();
-    isValid(key, _sortKeys, funcName: 'sortingKey', argName: 'key');
-    _sortKey = key;
-    sort();
+    reorder(sortingKey: key);
   }
 
   set sortingOrd(String order) {
     _log.config('Set sorting order to $order');
+    isValid(order, _sortOrder, funcName: 'set sortingOrd', argName: 'order');
     order = order.toLowerCase();
-    isValid(order, _sortOrder, funcName: 'sortingOrd', argName: 'order');
-    _sortOrd = order;
-    sort();
+    reorder(sortingOrd: order);
   }
 
   Dictionary sort({String? sortingKey, String? sortingOrd}) {
-    if (sortingKey != null && sortingOrd != null) {
+    var sorted = copy();
+    sorted.reorder(sortingKey: sortingKey, sortingOrd: sortingOrd);
+    return sorted;
+  }
+
+  void reorder({String? sortingKey, String? sortingOrd}) {
+    final resolvedKey = (sortingKey == null || sortingKey.isEmpty)
+        ? _sortKey
+        : sortingKey.toLowerCase();
+    final resolvedOrd = (sortingOrd == null || sortingOrd.isEmpty)
+        ? _sortOrd
+        : sortingOrd.toLowerCase();
+
+    if (resolvedKey.isNotEmpty && resolvedOrd.isNotEmpty) {
+      if (_sortKeys.isNotEmpty) {
+        isValid(
+          resolvedKey,
+          _sortKeys,
+          funcName: 'sort',
+          argName: 'sortingKey',
+        );
+      }
+
+      isValid(resolvedOrd, _sortOrder, funcName: 'sort', argName: 'sortingOrd');
+      _sortKey = resolvedKey;
+      _sortOrd = resolvedOrd;
+
       _log.fine(
-        'Sorting the Dictionary $_headString based on key "$sortingKey", and order "$sortingOrd".',
+        'Sorting the Dictionary $headString based on key "$resolvedKey", and order "$resolvedOrd".',
       );
+
       characters.sort((firstChar, secondChar) {
-        final first = firstChar[sortingKey] as String;
-        final second = secondChar[sortingKey] as String;
+        final first = firstChar[resolvedKey] as String;
+        final second = secondChar[resolvedKey] as String;
         if (sortingOrd == 'ascending') {
           return first.compareTo(second);
         } else {
           return second.compareTo(first);
         }
       });
-      return this;
     }
-    return this;
-  }
-
-  Dictionary reorder(String sortingKey, String sortingOrd) {
-    if (sortingKey != _sortKey || sortingOrd != _sortOrd) {
-      isValid(sortingKey, _sortKeys, funcName: 'sort', argName: 'sortingKey');
-      isValid(sortingOrd, _sortOrder, funcName: 'sort', argName: 'sortingOrd');
-      _sortKey = sortingKey;
-      _sortOrd = sortingOrd;
-      sort();
-    }
-    return this;
   }
 
   /* ================================================================ */
@@ -504,7 +646,7 @@ class Dictionary extends Iterable<Character> {
 
   Dictionary searchCategory({
     String pattern = "",
-    List<String> categories = const [],
+    List<String> searchCategories = const [],
     bool exact = true,
   }) {
     bool contentContains(String pattern, String content) {
@@ -549,11 +691,13 @@ class Dictionary extends Iterable<Character> {
     }
 
     _log.finer(
-      'Search dictionary categories "$categories" for pattern: $pattern',
+      'Search dictionary categories "$searchCategories" for pattern: $pattern',
     );
 
     final matches = _characters
-        .where((Character char) => categoryContains(pattern, categories, char))
+        .where(
+          (Character char) => categoryContains(pattern, searchCategories, char),
+        )
         .toList();
 
     return createInstance(characters: matches);
@@ -574,31 +718,8 @@ class Dictionary extends Iterable<Character> {
   /*                            READ ASYNC                            */
   /* ================================================================ */
 
-  Character _listItem({
-    Map<String, Type> specs = const {},
-    Map<String, dynamic> entry = const {},
-  }) {
-    return Character(
-      specs: specs,
-      entry: entry,
-      mapSyntax: _mapSyntax,
-      mapColor: _mapColor,
-      mapColorFav: _mapColorFav,
-    );
-  }
-
   Map<String, dynamic> _updateEntry(Map<String, dynamic> entry) {
     return entry;
-  }
-
-  void addSyntax(
-    Map<String, dynamic> mapSyntax,
-    Map<String, dynamic> mapColor, {
-    Map<String, dynamic>? mapColorFav,
-  }) {
-    _mapColor = mapColor;
-    _mapSyntax = mapSyntax;
-    _mapColorFav = mapColorFav;
   }
 
   Future<bool> read(
@@ -630,25 +751,11 @@ class Dictionary extends Iterable<Character> {
 
     final success = switch (fileFormat) {
       '.txt' => await () async {
-        return await _readTXT(
-          targetFile,
-          categories: this.categories,
-          template: template ?? '',
-          add: add,
-        );
+        return await _readTXT(targetFile, template: template ?? '', add: add);
       }(),
-      '.jsonl' => await _readJSONL(
-        targetFile,
-        categories: this.categories,
-        add: add,
-      ),
+      '.jsonl' => await _readJSONL(targetFile, add: add),
       '.db' => await () async {
-        return await _readDB(
-          targetFile,
-          categories: this.categories,
-          name: name,
-          add: add,
-        );
+        return await _readDB(targetFile, name: name, add: add);
       }(),
       _ => false,
     };
@@ -657,18 +764,13 @@ class Dictionary extends Iterable<Character> {
 
   Future<bool> _readTXT(
     File file, {
-    Map<String, Type> categories = const {},
     String template = '',
     bool add = true,
   }) async {
     return false;
   }
 
-  Future<bool> _readJSONL(
-    File file, {
-    Map<String, Type> categories = const {},
-    bool add = true,
-  }) async {
+  Future<bool> _readJSONL(File file, {bool add = true}) async {
     try {
       if (!add) empty();
       final List<Character> jsonlCharacters = [];
@@ -677,29 +779,22 @@ class Dictionary extends Iterable<Character> {
       for (String line in lines) {
         if (line.trim().isEmpty) continue;
         Map<String, dynamic> entry = json.decode(line) as Map<String, dynamic>;
-        jsonlCharacters.add(
-          _listItem(specs: categories, entry: _updateEntry(entry)),
-        );
+        jsonlCharacters.add(_listItem(entry: _updateEntry(entry)));
       }
       _setCharacters(jsonlCharacters);
-      sort();
+      reorder();
       return true;
     } catch (e) {
       return false;
     }
   }
 
-  Future<bool> _readDB(
-    File file, {
-    Map<String, Type> categories = const {},
-    String? name,
-    bool add = true,
-  }) async {
+  Future<bool> _readDB(File file, {String? name, bool add = true}) async {
     return false;
   }
 }
 
-class ChDictionary extends Dictionary {
+class ChDictionary extends Dictionary<ChCharacter> {
   @override
   Set<String> get _sortKeys => const {'simplified', 'traditional', 'pinyin'};
   @override
@@ -725,7 +820,8 @@ class ChDictionary extends Dictionary {
   }) {
     return ChDictionary(
       name: name ?? this.name,
-      characters: characters,
+      characters:
+          characters ?? this.characters.map((char) => char.copy()).toList(),
       rules: rules ?? this.rules.map((rule) => rule.copy()).toList(),
       categories: categories ?? Map<String, Type>.from(_categories),
       sortingKey: sortingKey ?? _sortKey,
@@ -738,9 +834,7 @@ class ChDictionary extends Dictionary {
   /* ================================================================ */
 
   @override
-  Dictionary sort({String? sortingKey, String? sortingOrd}) {
-    if (_sortKey.isEmpty || _sortOrd.isEmpty) return this;
-
+  void reorder({String? sortingKey, String? sortingOrd}) {
     final resolvedKey = (sortingKey == null || sortingKey.isEmpty)
         ? _sortKey
         : sortingKey.toLowerCase();
@@ -748,45 +842,52 @@ class ChDictionary extends Dictionary {
         ? _sortOrd
         : sortingOrd.toLowerCase();
 
-    String getNextKey(Character char, String currentKey) {
-      List<String> nextKeys;
+    List<String> getPriority(String currentKey) {
+      List<String> priorities;
       switch (currentKey) {
         case 'simplified':
-          nextKeys = ['simplified', 'traditional', 'pinyin'];
-          break;
+          priorities = ['simplified', 'traditional', 'pinyin'];
         case 'traditional':
-          nextKeys = ['traditional', 'pinyin', 'simplified'];
-          break;
+          // priorities = ['traditional', 'simplified', 'pinyin'];
+          priorities = ['traditional', 'pinyin', 'simplified'];
         case 'pinyin':
-          nextKeys = ['pinyin', 'simplified', 'traditional'];
-          break;
+          priorities = ['pinyin', 'simplified', 'traditional'];
         default:
-          nextKeys = ['pinyin', 'simplified', 'traditional'];
+          priorities = ['pinyin', 'simplified', 'traditional'];
       }
-      for (final key in nextKeys) {
-        final value = char[key] as String;
-        if (value.isNotEmpty) return value;
-      }
-      return '';
+      return priorities;
     }
 
-    isValid(resolvedKey, _sortKeys, funcName: 'sort', argName: 'sortingKey');
-    isValid(resolvedOrd, _sortOrder, funcName: 'sort', argName: 'sortingOrd');
+    String getPriorityValue(Character char, int priority) {
+      final priorities = getPriority(resolvedKey);
+      var value = char[priorities[priority]];
+      if (value is String) return value;
+      return "";
+    }
 
-    characters.sort((firstChar, secondChar) {
-      final first = TextModifier(
-        getNextKey(firstChar, resolvedKey),
-      ).toNumericPinyin().result;
-      final second = TextModifier(
-        getNextKey(secondChar, resolvedKey),
-      ).toNumericPinyin().result;
-      if (resolvedOrd == 'ascending') {
-        return first.compareTo(second);
-      } else {
-        return second.compareTo(first);
-      }
-    });
-    return this;
+    if (resolvedKey.isNotEmpty && resolvedOrd.isNotEmpty) {
+      isValid(resolvedKey, _sortKeys, funcName: 'sort', argName: 'sortingKey');
+      isValid(resolvedOrd, _sortOrder, funcName: 'sort', argName: 'sortingOrd');
+      _sortKey = resolvedKey;
+      _sortOrd = resolvedOrd;
+
+      _log.fine(
+        'Sorting the ChDictionary $headString based on key "$resolvedKey", and order "$resolvedOrd".',
+      );
+
+      characters.sort((firstChar, secondChar) {
+        return compareMultiple<Character>(
+          firstChar,
+          secondChar,
+          reverse: resolvedOrd == 'descending',
+          [
+            (a, b) => getPriorityValue(a, 0).compareTo(getPriorityValue(b, 0)),
+            (a, b) => getPriorityValue(a, 1).compareTo(getPriorityValue(b, 1)),
+            (a, b) => getPriorityValue(a, 2).compareTo(getPriorityValue(b, 2)),
+          ],
+        );
+      });
+    }
   }
 
   /* ================================================================ */
@@ -801,7 +902,7 @@ class ChDictionary extends Dictionary {
     if (categories.isNotEmpty) {
       return searchCategory(
         pattern: pattern,
-        categories: categories,
+        searchCategories: categories,
         exact: exact,
       );
     }
@@ -850,9 +951,11 @@ class ChDictionary extends Dictionary {
 
     final chCharacters = List<ChCharacter>.from(_characters);
     final matches = chCharacters
-        .where((ChCharacter char) => isMatch(char, listPattern))
+        .where(
+          (ChCharacter char) =>
+              isMatch(char, listPattern, ignoreVariants: false),
+        )
         .toList();
-
     return createInstance(characters: matches);
   }
 
@@ -861,13 +964,10 @@ class ChDictionary extends Dictionary {
   /* ================================================================ */
 
   @override
-  Character _listItem({
-    Map<String, Type> specs = const {},
-    Map<String, dynamic> entry = const {},
-  }) {
+  ChCharacter _listItem({Map<String, dynamic> entry = const {}}) {
     return ChCharacter(
-      specs: specs,
       entry: entry,
+      specs: categories,
       mapSyntax: _mapSyntax,
       mapColor: _mapColor,
       mapColorFav: _mapColorFav,

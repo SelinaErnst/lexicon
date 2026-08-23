@@ -1,109 +1,76 @@
 import 'utils.dart';
-import 'text_action.dart';
-// import 'package:logging/logging.dart';
+import 'package:logging/logging.dart';
 
-// final Logger _log = Logger('TextModEngine');
+final Logger _log = Logger('TextModifierLog');
 
 class TextModifier<T extends Object> {
   T _input;
   T result;
-  // TextAction? _strAct;
-  TextAction? _inputAct;
+  String? _fullCommand;
+  String? _colorVal;
 
-  static const String _cjkRadSupl = r'\u2E80-\u2EFF';
-  static const String _kangxiRad = r'\u2F00-\u2FDF';
-  static const String _cjkStrokes = r'\u31C0-\u31EF';
-  static const String _cjkExtA = r'\u3400-\u4DBF';
-  static const String _cjkUniIdeogr = r'\u4E00-\u9FFF';
-  static const String _pleco = r'\u{EAAA}-\u{EFFF}';
+  TextModifier? _actString;
 
-  static const String _extBF = r'\u{20000}-\u{2EBEF}';
-  static const String _extGH = r'\u{30000}-\u{3347F}';
-  static const String _extI = r'\u{2EBF0}-\u{2EE5F}';
-  static const String unassignedExtensions = r'\u{40000}-\u{10FFFF}';
+  void Function(dynamic result)? transform;
 
-  static const String isChineseChar =
-      '$_cjkRadSupl$_kangxiRad$_cjkStrokes$_cjkExtA$_cjkUniIdeogr$_extBF$_extI$_extGH';
+  Map<String, dynamic>? mapSyntax;
+  Map<String, dynamic>? mapColor;
+  Map<String, dynamic>? mapColorFav;
 
   static final Map<String, RegExp> _patterns = {
     'chinese': RegExp('([$isChineseChar]+)', unicode: true),
     'notChinese': RegExp('([^$isChineseChar]+)', unicode: true),
     'english': RegExp(r'([a-zA-Z]+)'),
   };
-  static final _plecoPatterns =
-      "(${['1A0A', 'A0P', '1A0P', 'AA10', 'AA00'].join('|')})";
-  static final RegExp rPleco = RegExp(
-    '[$_pleco]|$_plecoPatterns',
-    unicode: true,
-  );
-  static final RegExp rDigit = RegExp(r'\d+');
-  // static final RegExp rPunctuation = RegExp(r'[?|!|.|？|。|,]$');
-  static final RegExp rPunctuation = RegExp(r'[.,?!。，！？]');
-  static final RegExp rVowel = RegExp(r'[aoeiuvü]+');
-  static final RegExp rFrame = RegExp(r'\[([^\]\[]+)\]');
-  static final RegExp rBullet = RegExp(r'[■□●○]');
-
-  RegExp? getPattern(String type) {
-    return _patterns[type];
-  }
-
-  static const List<List<String>> _pinyinToneMark = [
-    ['a', 'o', 'e', 'i', 'u', 'v', 'ü'], // Tone 0 / 5
-    ['ā', 'ō', 'ē', 'ī', 'ū', 'ǖ', 'ǖ'], // Tone 1
-    ['á', 'ó', 'é', 'í', 'ú', 'ǘ', 'ǘ'], // Tone 2
-    ['ǎ', 'ǒ', 'ě', 'ǐ', 'ǔ', 'ǚ', 'ǚ'], // Tone 3
-    ['à', 'ò', 'è', 'ì', 'ù', 'ǜ', 'ǜ'], // Tone 4
-  ];
-
-  static const Map<String, List<String>> _toneMap = {
-    'ā': ['a', '1'], 'á': ['a', '2'], 'ǎ': ['a', '3'], 'à': ['a', '4'], // a
-    'ē': ['e', '1'], 'é': ['e', '2'], 'ě': ['e', '3'], 'è': ['e', '4'], // e
-    'ī': ['i', '1'], 'í': ['i', '2'], 'ǐ': ['i', '3'], 'ì': ['i', '4'], // i
-    'ō': ['o', '1'], 'ó': ['o', '2'], 'ǒ': ['o', '3'], 'ò': ['o', '4'], // o
-    'ū': ['u', '1'], 'ú': ['u', '2'], 'ǔ': ['u', '3'], 'ù': ['u', '4'], // u
-    'ǖ': ['v', '1'], 'ǘ': ['v', '2'], 'ǚ': ['v', '3'], 'ǜ': ['v', '4'], // ü
-    'ü': ['v', ''],
-  };
-
-  static const Map<String, String> _punctuationMap = {
-    // Sentence Endings
-    '.': '。',
-    ',': '，',
-    '!': '！',
-    '?': '？',
-    // Pauses & Breaks
-    ':': '：',
-    ';': '；',
-    // Enclosures & Quotes
-    '(': '（',
-    ')': '）',
-    '[': '［',
-    ']': '］',
-    '{': '｛',
-    '}': '｝',
-    // Special Typographical Marks
-    '_': '＿',
-    '~': '～',
-  };
 
   /* ================================================================ */
   /*                            CONSTRUCTOR                           */
   /* ================================================================ */
 
-  TextModifier(this._input) : result = _input;
+  TextModifier(this._input, {this.transform}) : result = _input;
 
-  TextModifier<T> set(T input) {
-    _input = input;
-    result = input;
+  TextModifier<T> copyWith({
+    T? input,
+    void Function(dynamic result)? transform,
+    Map<String, dynamic>? mapSyntax,
+    Map<String, dynamic>? mapColor,
+    Map<String, dynamic>? mapColorFav,
+  }) {
+    final mod = TextModifier(
+      input ?? _input,
+      transform: transform ?? this.transform,
+    );
+    if (mapSyntax != null || mapColor != null) {
+      mod.addSyntax(
+        mapSyntax: mapSyntax,
+        mapColor: mapColor,
+        mapColorFav: mapColorFav,
+      );
+    }
+    return mod;
+  }
+
+  TextModifier<T> set(dynamic input, {String? command, String? color}) {
+    if (input is! T) {
+      throw ArgumentError(
+        'input for TextModifier<$T> cannot be ${input.runtimeType}',
+      );
+    } else {
+      _input = input;
+      result = input;
+    }
+    if (command != null) _fullCommand = getFullCommand(command);
+    if (color != null) _colorVal = _getColor(color);
     return this;
   }
 
-  T get input => _input;
+  void transformResult(T modified) {
+    if (transform != null) {
+      transform!(modified);
+    }
+  }
 
-  // TextModifier cleanLanguage(String language) {
-  //   result = toCleanSentence(language);
-  //   return this;
-  // }
+  T get input => _input;
 
   TextModifier<String> createInstance(String text) {
     return TextModifier<String>(text);
@@ -113,92 +80,115 @@ class TextModifier<T extends Object> {
     return createInstance(text);
   }
 
-  void addAction(
+  void addSyntax({
     Map<String, dynamic>? mapSyntax,
-    Map<String, dynamic>? mapColor, {
+    Map<String, dynamic>? mapColor,
     Map<String, dynamic>? mapColorFav,
   }) {
-    _inputAct = TextAction(
-      result,
-      mapColor: mapColor,
-      mapSyntax: mapSyntax,
-      mapColorFav: mapColorFav,
-    );
+    this.mapSyntax = mapSyntax;
+    this.mapColor = mapColor;
+    this.mapColorFav = mapColorFav;
   }
 
-  bool get hasAct => _inputAct != null;
+  void _warnMissingSyntax() {
+    if (!hasSyntax) throw AssertionError('Syntax has not been added yet.');
+  }
 
-  TextAction get act {
-    if (_inputAct == null) {
-      throw AssertionError('TextAction object has not been added yet.');
+  bool get hasSyntax => mapColor != null && mapSyntax != null;
+
+  TextModifier<String> get actString {
+    _actString = _actString ?? TextModifier<String>('');
+    if (!_actString!.hasSyntax) {
+      _actString!.addSyntax(
+        mapColor: mapColor,
+        mapSyntax: mapSyntax,
+        mapColorFav: mapColorFav,
+      );
     }
-    _inputAct!.set(result);
-    return _inputAct!;
+    _actString!.set('', command: command, color: color);
+    return _actString as TextModifier<String>;
   }
-
-  // TextAction getStrAct(String text) {
-  //   if (_strAct == null) {
-  //     throw AssertionError('TextAction object has not been added yet.');
-  //   }
-  //   _strAct!.set(text);
-  //   return _strAct!;
-  // }
 
   /* ================================================================ */
   /*                              METHODS                             */
   /* ================================================================ */
 
   T _process(String Function(String) worker, {bool ignoreEmpty = true}) {
+    T processedResult;
     if (result is String) {
-      return worker(result as String) as T;
-    } else if (result is List) {
-      final List<String> processedResult = [];
+      processedResult = worker(result as String) as T;
+    } else if (result is Map) {
+      final Map<String, String> processing = {};
+
+      for (final entry in (result as Map).entries) {
+        final String processed = worker(entry.value.toString());
+        if (!ignoreEmpty || processed.trim().isNotEmpty) {
+          processing[entry.key.toString()] = processed;
+        }
+      }
+      processedResult = processing as T;
+    } else if (result is List<String>) {
+      final List<String> processing = [];
       for (final dynamic element in result as List) {
         final String processed = worker(element.toString());
         if (!ignoreEmpty || processed.trim().isNotEmpty) {
-          processedResult.add(processed);
+          processing.add(processed);
         }
       }
-      return processedResult as T;
+      processedResult = processing as T;
+    } else {
+      processedResult = result;
     }
-    return result;
+    transformResult(processedResult);
+    return processedResult;
   }
 
-  /* ––––––––––––––––––––––––––––– clean –––––––––––––––––––––––––––– */
+  /* ================================================================ */
+  /*                        STRING MANIPULATION                       */
+  /* ================================================================ */
 
-  TextModifier<T> removeSyntax() {
+  TextModifier<T> strip(String pattern, {bool ignoreEmpty = true}) {
     result = _process((text) {
-      return text.replaceAll(rPleco, '');
-    }, ignoreEmpty: false);
+      return text.strip(pattern);
+    }, ignoreEmpty: ignoreEmpty);
     return this;
   }
 
-  TextModifier<T> toCleanLink() {
+  /* ================================================================ */
+  /*                         SYNTAX PROCESSING                        */
+  /* ================================================================ */
+
+  TextModifier<T> removeSyntax({bool ignoreEmpty = false}) {
     result = _process((text) {
-      // final RegExp punctuationPat = RegExp(r'[.,!?。，！？]');
+      return text.replaceAll(rPleco, '');
+    }, ignoreEmpty: ignoreEmpty);
+    return this;
+  }
+
+  TextModifier<T> toCleanLink({bool ignoreEmpty = true}) {
+    result = _process((text) {
       return text
           .replaceAll(rPunctuation, '')
           .replaceAll('_', '＿')
           .replaceAll('…', '＿')
           .replaceAll(' ', '')
           .strip('＿');
-    }, ignoreEmpty: true);
+    }, ignoreEmpty: ignoreEmpty);
     return this;
   }
 
-  TextModifier<T> toCleanRef() {
+  TextModifier<T> toCleanRef({bool ignoreEmpty = true}) {
     result = _process((text) {
-      // final RegExp punctuationPat = RegExp(r'[.,!?。，！？]');
       return text
-          // .replaceAll(punctuationPat, '')
+          // .replaceAll(rPunctuation, '')
           .replaceAll('_', '＿')
           .replaceAll('…', '＿')
           .replaceAll(' ', '');
-    }, ignoreEmpty: true);
+    }, ignoreEmpty: ignoreEmpty);
     return this;
   }
 
-  TextModifier<T> toCleanLanguage(String language) {
+  TextModifier<T> toCleanLanguage(String language, {bool ignoreEmpty = false}) {
     isValid(
       language,
       {'chinese', 'english', 'german'},
@@ -217,21 +207,23 @@ class TextModifier<T extends Object> {
       }
 
       return processed;
-    }, ignoreEmpty: false);
+    }, ignoreEmpty: ignoreEmpty);
     return this;
   }
 
-  /* –––––––––––––––––––––––––––– convert ––––––––––––––––––––––––––– */
+  /* ================================================================ */
+  /*                              PINYIN                              */
+  /* ================================================================ */
 
-  TextModifier<T> toPlainPinyin() {
+  TextModifier<T> toPlainPinyin({bool ignoreEmpty = false}) {
     result = _process((pinyin) {
       final pinyinNumeric = _getMod(pinyin).toNumericPinyin().result;
       return pinyinNumeric.replaceAll(rDigit, '');
-    }, ignoreEmpty: false);
+    }, ignoreEmpty: ignoreEmpty);
     return this;
   }
 
-  TextModifier<T> toNumericPinyin() {
+  TextModifier<T> toNumericPinyin({bool ignoreEmpty = false}) {
     result = _process((pinyin) {
       String currentText = pinyin.toLowerCase();
       String toneDigit = '';
@@ -258,11 +250,11 @@ class TextModifier<T extends Object> {
       }
 
       return convertedText;
-    }, ignoreEmpty: false);
+    }, ignoreEmpty: ignoreEmpty);
     return this;
   }
 
-  TextModifier<T> toToneMarkedPinyin() {
+  TextModifier<T> toToneMarkedPinyin({bool ignoreEmpty = false}) {
     result = _process((pinyin) {
       String currentText = pinyin.toLowerCase();
       currentText = currentText.replaceAll('ü', 'v');
@@ -348,12 +340,12 @@ class TextModifier<T extends Object> {
         convertedWords.add(wordBuilder);
       }
       return convertedWords.join(' ');
-    }, ignoreEmpty: false);
+    }, ignoreEmpty: ignoreEmpty);
     return this;
   }
   /* ––––––––––––––––––––––––––––– regex –––––––––––––––––––––––––––– */
 
-  TextModifier<T> findFirstChar(String type) {
+  TextModifier<T> findFirstChar(String type, {bool ignoreEmpty = true}) {
     isValid(
       type,
       _patterns.keys.toSet(),
@@ -371,47 +363,281 @@ class TextModifier<T extends Object> {
         return matches.first.group(0)!;
       }
       return '';
-    }, ignoreEmpty: true);
+    }, ignoreEmpty: ignoreEmpty);
     return this;
+  }
+
+  TextModifier<T> replaceAll(
+    String pattern,
+    String replacement, {
+    bool ignoreEmpty = false,
+  }) {
+    return modifyPattern(RegExp(pattern), (match) => replacement);
   }
 
   TextModifier<T> modifyPattern(
     RegExp pattern,
-    String Function(Match match) onMatch,
-  ) {
+    String Function(Match match) onMatch, {
+    bool ignoreEmpty = false,
+  }) {
     result = _process((text) {
       return text.replaceAllMapped(pattern, onMatch);
-    });
+    }, ignoreEmpty: ignoreEmpty);
     return this;
   }
 
-  // TextModifier<T> linkPinyin() {
-  //   RegExp pattern = rFrame;
-  //   return modifyPattern(pattern, (match) {
-  //     final linked = getStrAct(
-  //       match.group(1)!,
-  //     ).applySyntax(commandList: ['link']).result;
-  //     return '[$linked]';
-  //   });
-  // }
+  TextModifier<T> linkPinyin({bool ignoreEmpty = false}) {
+    return modifyPattern(rFrame, (match) {
+      final linked = actString
+          .set(match.group(1)!)
+          .applySyntax(commandList: ['link'])
+          .result;
+      return '[$linked]';
+    }, ignoreEmpty: ignoreEmpty);
+  }
 
-  TextModifier<T> convertPinyin() {
+  TextModifier<T> convertPinyin({bool ignoreEmpty = false}) {
     TextModifier<String> mod = _getMod('');
     return modifyPattern(rFrame, (match) {
       final pinyin = mod.set(match.group(1)!).toToneMarkedPinyin().result;
       return '[$pinyin]';
-    });
+    }, ignoreEmpty: ignoreEmpty);
   }
 
-  TextModifier<T> writeToPleco() {
-    String nlSyntax = act.getSyntax(cmd: 'newline')[0];
+  TextModifier<T> writeToPleco({bool ignoreEmpty = true}) {
+    String nlSyntax = getSyntax(cmd: 'newline')[0];
     result = _process((text) {
       String result = text;
       return result
           .replaceAll('\n\n', '$nlSyntax $nlSyntax')
           .replaceAll('\n', nlSyntax)
           .replaceAll(rBullet, '◼');
-    }, ignoreEmpty: true);
+    }, ignoreEmpty: ignoreEmpty);
     return this;
   }
+
+  /* ================================================================ */
+  /*                           APPLY SYNTAX                           */
+  /* ================================================================ */
+
+  String _frameText(String text, List<String> syntax) {
+    String framedText = text;
+    if (syntax.length == 2) {
+      framedText = '${syntax.first}$framedText${syntax.last}';
+    } else if (syntax.length == 1) {
+      framedText = '${syntax.first}$framedText';
+    }
+    return framedText;
+  }
+
+  TextModifier<T> applySyntax({
+    List<String> commandList = const [],
+    bool ignoreEmpty = false,
+  }) {
+    result = _process((text) {
+      if (commandList.isEmpty) {
+        return actString.set(text, command: _fullCommand).applyCommand().result;
+      }
+      return actString.set(text).applySyntaxCommands(commandList).result;
+    }, ignoreEmpty: ignoreEmpty);
+    return this;
+  }
+
+  TextModifier<T> applyCommand({bool ignoreEmpty = false}) {
+    result = _process((text) {
+      final List<String> activeSyntax = getSyntax(cmd: command);
+      final activeColor = color;
+      if (text.isEmpty) return text;
+      String processed = text;
+      if (command == _colorCommand && activeColor != null) {
+        processed = '$activeColor$processed';
+      }
+      processed = _frameText(processed, activeSyntax);
+      return processed;
+    }, ignoreEmpty: ignoreEmpty);
+    return this;
+  }
+
+  TextModifier<T> applySyntaxCommands(
+    dynamic commands, {
+    bool ignoreEmpty = false,
+  }) {
+    result = _process((text) {
+      String applied = text;
+      if (commands is List) {
+        for (final String cmd in commands as List<String>) {
+          applied = actString.set(applied, command: cmd).applyCommand().result;
+        }
+      } else {
+        applied = actString
+            .set(applied, command: commands as String)
+            .applyCommand()
+            .result;
+      }
+      return applied;
+    }, ignoreEmpty: ignoreEmpty);
+    return this;
+  }
+
+  /* ================================================================ */
+  /*                             COMMANDS                             */
+  /* ================================================================ */
+
+  static final String _defaultCommand = 'normal';
+  static final String _colorCommand = 'color';
+
+  set command(String newCommand) => _fullCommand = getFullCommand(newCommand);
+
+  String? get command {
+    final currentCommand = _fullCommand;
+    if (currentCommand == null) return null;
+    if (currentCommand == _defaultCommand) return _defaultCommand;
+    return currentCommand;
+  }
+
+  String? getFullCommand(String? cmd) {
+    if (cmd == null || cmd == _defaultCommand) {
+      return cmd;
+    }
+
+    _warnMissingSyntax();
+
+    for (final commandSyntax in mapSyntax!.entries) {
+      if (cmd == commandSyntax.key) return commandSyntax.key;
+      final dynamic commandInfo = commandSyntax.value;
+      if (commandInfo is Map && commandInfo.containsKey('caller')) {
+        final dynamic caller = commandInfo['caller'];
+        if (caller is List) {
+          if (caller.contains(cmd)) return commandSyntax.key;
+        }
+      }
+    }
+    throw ArgumentError('Invalid command "$cmd".');
+  }
+
+  bool _isCommand(String? fullCommand) {
+    if (fullCommand == null) return false;
+    _warnMissingSyntax();
+    if (mapSyntax!.containsKey(fullCommand)) return true;
+    return false;
+  }
+
+  List<String> getSyntax({String? cmd}) {
+    String? targetedCommand;
+    if (cmd != null) {
+      targetedCommand = getFullCommand(cmd);
+    } else {
+      targetedCommand = _fullCommand;
+    }
+
+    if (_isCommand(targetedCommand)) {
+      _warnMissingSyntax();
+      return List<String>.from(
+        mapSyntax![targetedCommand]['syntax'] as List<dynamic>,
+      );
+    }
+    _log.warning('Could not get syntax from command "$command"');
+    return [];
+  }
+
+  String? get color => _colorVal;
+
+  set color(String newColor) => _colorVal = _getColor(newColor);
+
+  String? _getColor(String? col) {
+    if (col == null) return null;
+    if (_isColor(col)) return col;
+    if (_isFavColor(col)) {
+      _warnMissingSyntax();
+      col = mapColorFav![col] as String;
+    }
+    if (_isColorName(col)) {
+      _warnMissingSyntax();
+      final colorVal = mapColor![col] as String;
+      return colorVal;
+    }
+    throw ArgumentError('Invalid color "$col".');
+  }
+
+  bool _isColor(String col) {
+    _warnMissingSyntax();
+    if (mapColor!.containsValue(col)) return true;
+    return false;
+  }
+
+  bool _isColorName(String col) {
+    _warnMissingSyntax();
+    if (mapColor!.containsKey(col)) return true;
+    if (mapColorFav is Map && mapColorFav!.containsKey(col)) return true;
+    return false;
+  }
+
+  bool _isFavColor(String col) {
+    if (mapColorFav is Map && mapColorFav!.containsKey(col)) return true;
+    return false;
+  }
 }
+
+const String _cjkRadSupl = r'\u2E80-\u2EFF';
+const String _kangxiRad = r'\u2F00-\u2FDF';
+const String _cjkStrokes = r'\u31C0-\u31EF';
+const String _cjkExtA = r'\u3400-\u4DBF';
+const String _cjkUniIdeogr = r'\u4E00-\u9FFF';
+const String _pleco = r'\u{EAAA}-\u{EFFF}';
+
+const String _extBF = r'\u{20000}-\u{2EBEF}';
+const String _extGH = r'\u{30000}-\u{3347F}';
+const String _extI = r'\u{2EBF0}-\u{2EE5F}';
+const String unassignedExtensions = r'\u{40000}-\u{10FFFF}';
+
+const String isChineseChar =
+    '$_cjkRadSupl$_kangxiRad$_cjkStrokes$_cjkExtA$_cjkUniIdeogr$_extBF$_extI$_extGH';
+
+final _plecoPatterns = "(${['1A0A', 'A0P', '1A0P', 'AA10', 'AA00'].join('|')})";
+final RegExp rPleco = RegExp('[$_pleco]|$_plecoPatterns', unicode: true);
+final RegExp rDigit = RegExp(r'\d+');
+final RegExp rPunctuation = RegExp(r'[.,?!。，！？]');
+final RegExp rVowel = RegExp(r'[aoeiuvü]+');
+final RegExp rFrame = RegExp(r'\[([^\]\[]+)\]');
+final RegExp rBullet = RegExp(r'[■□●○]');
+
+const List<List<String>> _pinyinToneMark = [
+  ['a', 'o', 'e', 'i', 'u', 'v', 'ü'], // Tone 0 / 5
+  ['ā', 'ō', 'ē', 'ī', 'ū', 'ǖ', 'ǖ'], // Tone 1
+  ['á', 'ó', 'é', 'í', 'ú', 'ǘ', 'ǘ'], // Tone 2
+  ['ǎ', 'ǒ', 'ě', 'ǐ', 'ǔ', 'ǚ', 'ǚ'], // Tone 3
+  ['à', 'ò', 'è', 'ì', 'ù', 'ǜ', 'ǜ'], // Tone 4
+];
+
+const Map<String, List<String>> _toneMap = {
+  'ā': ['a', '1'], 'á': ['a', '2'], 'ǎ': ['a', '3'], 'à': ['a', '4'], // a
+  'ē': ['e', '1'], 'é': ['e', '2'], 'ě': ['e', '3'], 'è': ['e', '4'], // e
+  'ī': ['i', '1'], 'í': ['i', '2'], 'ǐ': ['i', '3'], 'ì': ['i', '4'], // i
+  'ō': ['o', '1'], 'ó': ['o', '2'], 'ǒ': ['o', '3'], 'ò': ['o', '4'], // o
+  'ū': ['u', '1'], 'ú': ['u', '2'], 'ǔ': ['u', '3'], 'ù': ['u', '4'], // u
+  'ǖ': ['v', '1'], 'ǘ': ['v', '2'], 'ǚ': ['v', '3'], 'ǜ': ['v', '4'], // ü
+  'ü': ['v', ''],
+};
+
+const Map<String, String> _punctuationMap = {
+  // Sentence Endings
+  '.': '。',
+  ',': '，',
+  '!': '！',
+  '?': '？',
+  // Pauses & Breaks
+  ':': '：',
+  ';': '；',
+  // Enclosures & Quotes
+  '(': '（',
+  ')': '）',
+  '[': '［',
+  ']': '］',
+  '{': '｛',
+  '}': '｝',
+  // Special Typographical Marks
+  '_': '＿',
+  '~': '～',
+};
+
+// static final RegExp _bracketPattern = RegExp(r'[《》〈〉]');
