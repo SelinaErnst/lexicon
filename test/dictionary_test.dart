@@ -61,7 +61,6 @@ void main() {
       );
 
       exampleChD = await getExample() as ChDictionary;
-      print(exampleChD);
     });
 
     group('Dictionary attributes', () {
@@ -213,7 +212,6 @@ void main() {
           nC.copyWith({'id': 'B'}),
           nC.reconfigure(baseCategories: ['id']).copyWith({'id': 'C'}),
         ];
-        // print(exampleCharacters);
         chD.characters = exampleCharacters;
         nD.characters = exampleCharacters;
         expect(chD.length, 2);
@@ -224,7 +222,6 @@ void main() {
         emptyD.add(nD);
         expect(emptyD.length, 4);
         emptyChD.add(nD);
-        print(emptyChD);
         expect(emptyChD.length, 2);
       });
 
@@ -436,8 +433,6 @@ void main() {
           final categories = getCategories();
 
           await chd.read(File('assets/MCD.jsonl'), categories: categories);
-          print(chd.search(pattern: 'ba'));
-          print(chd[0].images());
         });
 
         test('write txt', () {
@@ -469,8 +464,6 @@ void main() {
         // exampleChD.reorder(sortingKey: 'traditional', sortingOrd: 'ascending');
         // exampleChD.reorder(sortingKey: 'simplified', sortingOrd: 'ascending');
         exampleChD.reorder(sortingKey: 'pinyin', sortingOrd: 'ascending');
-        // print(exampleChD.getSubset([2, 5, 7, 9, 11]));
-        // print(exampleChD.getSubset([2,9,5]) + exampleChD.getSubset([11,7]));
 
         expect(exampleChD[0]['english'], ['eight', '8']);
         expect(

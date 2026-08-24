@@ -152,8 +152,8 @@ bool isArgument(
   String funcName = '',
   String argName = '',
 }) {
-  final String argType = valid == null ? '' : 'Valid type: $valid';
-  if (vlaue == null) throw ArgumentError('$vlaue is required for func: $funcName.', argName);
+  final String argType = valid == null ? '' : ' Valid type: $valid';
+  if (vlaue == null) throw ArgumentError('$vlaue is required for func: $funcName.$argType', argName);
   return true;
 }
 
@@ -203,7 +203,6 @@ Future<T> readJSON<T>(File file) async {
     result = null;
   }
   if (result is T) return result;
-  print(result.runtimeType);
   throw Exception('Data is not of type $T');
 }
 

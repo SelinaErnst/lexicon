@@ -7,18 +7,30 @@ import 'package:collection/collection.dart';
 
 final Logger _log = Logger('WriterLog');
 
-Map<String, dynamic> getContSpecs(String container) {
+final _containerType = {'H', 'L', 'T', 'I'};
+
+final String defContainer = 'H:[normal|normal|normal]:PLACEHOLDER ';
+
+String getDefaultContainer({String type = '', bool onlySpecs = false}) {
+  _log.finest('Get default for Container type $type');
+  if (onlySpecs) return 'normal|normal|normal';
+  isValid(type[0], _containerType);
+  return '$type:[normal|normal|normal]:PLACEHOLDER ';
+}
+
+Map<String, dynamic> getContSpecs(String container, String type) {
   final RegExp outerPattern = RegExp(r'([^<]*?):\[(.*?)\]:([^>]*)');
   final RegExp innerPattern = RegExp(r'(\w*)\|(\w*)\|(\w*)');
   RegExpMatch? outerMatch = outerPattern.firstMatch(container);
   outerMatch =
-      outerMatch ??
-      outerPattern.firstMatch('H:[normal|normal|normal]:PLACEHOLDER ');
+      outerMatch ?? outerPattern.firstMatch(getDefaultContainer(type: type));
   if (outerMatch == null) throw Error();
   String? contSpecs = outerMatch.group(2);
-  contSpecs = contSpecs ?? 'normal|normal|normal';
+  contSpecs = contSpecs ?? getDefaultContainer(onlySpecs: true);
   RegExpMatch? innerMatch = innerPattern.firstMatch(contSpecs);
-  innerMatch = innerMatch ?? innerPattern.firstMatch('normal|normal|normal');
+  innerMatch =
+      innerMatch ??
+      innerPattern.firstMatch(getDefaultContainer(onlySpecs: true));
   if (innerMatch == null) throw Error();
   if (outerMatch.allGroups.length != 3 || innerMatch.allGroups.length != 3) {
     throw Error();
@@ -38,7 +50,7 @@ class ContentController {
   TextModifier<String> mod;
 
   ContentController(String container, TextModifier<String> mod) : mod = mod {
-    specs = getContSpecs(container);
+    specs = getContSpecs(container, 'H');
     if (specs['type'] != 'H') throw Error();
 
     final style = List<String>.from(specs['specs'] as List);
@@ -47,21 +59,21 @@ class ContentController {
     _visible = mod.getFullCommand(style[2]) ?? 'visible';
   }
 
-  bool get doContent {
+  bool get _doContent {
     if (['hidden', 'ignore'].contains(_visible)) return false;
     if (['visible', 'available'].contains(_visible)) return true;
     return true;
   }
 
-  bool doWrite(bool contentIsNotEmpty) {
+  bool _doWrite(bool contentIsNotEmpty) {
     if (['visible'].contains(_visible)) return true;
     if (['ignore'].contains(_visible)) return false;
     if (['available', 'hidden'].contains(_visible)) return contentIsNotEmpty;
     return true;
   }
 
-  String get writeHead {
-    if (doContent) {
+  String get _writeHead {
+    if (_doContent) {
       mod.color = _color;
       return mod.set(specs['data']).applySyntaxCommands([
         _font,
@@ -72,13 +84,14 @@ class ContentController {
   }
 
   String writeContent(String content) {
-    if (doWrite(content.isNotEmpty) &&
+    if (_doWrite(content.isNotEmpty) &&
         mod.set(content).findFirstChar('any').result != '') {
-      content = writeHead + content;
-      if (doContent) content += mod.getSyntax(cmd: 'newline')[0];
+      content = _writeHead + content;
+      if (_doContent) content += mod.getSyntax(cmd: 'newline')[0];
     } else {
       content = "";
     }
+    _log.fine('Write Head and Content: $content');
     return content;
   }
 }
@@ -92,7 +105,7 @@ class Content {
 
   Content(String container, Character character, TextModifier<String> mod)
     : mod = mod {
-    specs = getContSpecs(container);
+    specs = getContSpecs(container, 'T');
     _charCategoryContent = character.get(specs['data'] as String);
     type = specs['type'] as String;
     final style = List<String>.from(specs['specs'] as List);
@@ -119,7 +132,7 @@ class Content {
     }
   }
 
-  bool get doNewLine {
+  bool get _doNewLine {
     if (styleElements.containsKey('newline')) {
       return styleElements['newline'] == 'newline';
     }
@@ -127,6 +140,8 @@ class Content {
   }
 
   String writeContent() {
+    _log.finer('Write Content of type: $type');
+
     if (_charCategoryContent != null) {
       if (type.endsWith('LINK')) {
         _charCategoryContent = TextModifier(
@@ -171,7 +186,7 @@ class Content {
       );
       listContent = listContent.where((item) => item.trim() != "").toList();
       if (styleElements['bullet'] != "") bullet = "${styleElements['bullet']} ";
-      if (doNewLine) {
+      if (_doNewLine) {
         strContent = listContent.join("$nlSymb$bullet");
       } else {
         strContent = listContent.join(" $bullet");
@@ -206,6 +221,8 @@ class ContentBlock {
   }
 
   String writeContent(String template) {
+    _log.finer('Write Block: $command');
+
     final writer = Writer(mod, template: template);
     writer.compile(character);
     return writeBlock(writer.text);
@@ -280,6 +297,9 @@ class Writer {
   }
 
   Writer compile(Character character) {
+    _log.fine(
+      'Compile for character $character. Type: ${character.runtimeType}',
+    );
     this.character = character;
     _currentTmpl = template;
     _resultText = "";
@@ -309,11 +329,11 @@ class Writer {
 
     String container = matchContainer.group(1) ?? '';
     _currentTmpl = matchContainer.group(2) ?? '';
-    // final Map<String, dynamic> specs = getContSpecs(container);
     bool isController = (container.split(':').length > 1);
 
+    _log.finer('Write Container: $container');
+
     if (isController) {
-      // _log.info('Controller is $container');
       try {
         _currentHead = ContentController(container, mod);
       } catch (e) {

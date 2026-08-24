@@ -167,7 +167,8 @@
     },
     "indent": {
         "caller": [
-            "indent"
+            "indent", 
+            "ind"
         ],
         "syntax": [
             "1A0P"

@@ -428,10 +428,6 @@ class Dictionary<C extends Character> extends Iterable<C> {
         }
       }
     } else if (charList is Dictionary) {
-      // print(charList is Dictionary<C>);
-      // charList.characters.map((char) => );
-      // print(charList.characters);
-      // _characters = List.from(charList.characters);
       charList = List<Character>.from(charList.characters);
       _characters = charList.map((char) => _convertListItem(char)).toList();
     } else if (charList is C && charList.isNotEmpty) {
@@ -915,7 +911,6 @@ class Dictionary<C extends Character> extends Iterable<C> {
     _log.fine('Write to .jsonl file.');
 
     final lines = characters.map((char) => char.toMap()).toList();
-    // print(lines);
     try {
       final IOSink sink = file.openWrite(mode: FileMode.write, encoding: utf8);
       final int len = lines.length;

@@ -27,11 +27,10 @@ void main() async {
     dictionary.addSyntax(synatxMap, colorMap);
     await dictionary.read(File('assets/MCD.jsonl'), categories: catMap);
     expect(dictionary.isNotEmpty, true);
-    // print(dictionary.getSubset(List.generate(10, (index) => index)));
   });
 
   test('test', () async {
     var d = await getExample();
-    print(d);
+    expect(d.isNotEmpty,true);
   });
 }

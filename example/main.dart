@@ -21,8 +21,8 @@ void main() async {
   dictionary.read(File('assets/MCD.jsonl'), categories: catMap);
   /* –––––––––––––––––––––––– dictionary init ––––––––––––––––––––––– */
 
-  // print(dictionary.getSlice(stop: 10));
-  // final char = dictionary.search(pattern: 'ri4')[0];
-  // print(char);
-  // print(char.toMarkdownTable());
+  print(dictionary.getSlice(stop: 10));
+  final char = dictionary.search(pattern: 'ri4')[0];
+  print(char);
+  print(char.toMarkdownTable());
 }

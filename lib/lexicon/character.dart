@@ -193,8 +193,6 @@ class Character {
         comboCharacters.add(other.createInstance());
       }
     } else if (other is Dictionary) {
-      // print( other.reconfigure(categories: comboCategories));
-      // return other + this;
       return other.reconfigure(categories: comboCategories) + this;
     } else {
       _log.shout('Addition Failed: Unsupported type ${other.runtimeType}');

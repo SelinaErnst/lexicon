@@ -79,7 +79,6 @@ void main() {
       expect(empty.isEmpty, true);
       expect(empty.get('english'), null);
       expect(empty.contains('simplified'), true);
-      print([empty['pinyin']]);
     });
 
     test('comparing characters', () {
@@ -338,7 +337,7 @@ void main() {
 
     test('use info to show character data', () {
       expect(() => filled.info(), returnsNormally);
-      print(filled.toMarkdownTable());
+      expect(filled.toMarkdownTable().runtimeType, String);
     });
 
     test('base categories have to be strings', () {
