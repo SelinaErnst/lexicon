@@ -19,8 +19,8 @@ extension StringStripExtension on String {
   String strip(String string) {
     if (isEmpty || string.isEmpty) return this;
     final String escaped = RegExp.escape(string);
-    final RegExp leadingPattern = RegExp('^[$escaped]+');
-    final RegExp trailingPattern = RegExp('[$escaped]+\$');
+    final RegExp leadingPattern = RegExp('^($escaped)+');
+    final RegExp trailingPattern = RegExp('($escaped)+\$');
     return replaceAll(leadingPattern, '').replaceAll(trailingPattern, '');
   }
 }
@@ -48,6 +48,17 @@ extension MapDeepCopy on Map<String, dynamic> {
       }
       return MapEntry(key, value);
     });
+  }
+}
+
+extension ListStringCheck on List<dynamic> {
+  bool get isAllStrings {
+    if (this is List<String>) return true;
+    final int len = length;
+    for (int i = 0; i < len; i++) {
+      if (this[i] is! String) return false;
+    }
+    return true;
   }
 }
 
@@ -129,9 +140,31 @@ bool isValid(
   if (!valid.contains(value)) {
     throw ArgumentError(
       'Invalid value "$value"$description. Must be one of: ${valid.join(', ')}',
+      argName,
     );
   }
   return true;
+}
+
+bool isArgument(
+  dynamic vlaue,
+  Type? valid, {
+  String funcName = '',
+  String argName = '',
+}) {
+  final String argType = valid == null ? '' : 'Valid type: $valid';
+  if (vlaue == null) throw ArgumentError('$vlaue is required for func: $funcName.', argName);
+  return true;
+}
+
+Future<void> writeListToFile(List<dynamic> lines, File file) async {
+  final IOSink sink = file.openWrite(mode: FileMode.write, encoding: utf8);
+  final int len = lines.length;
+  for (int i = 0; i < len; i++) {
+    sink.write('${lines[i].toString()}\n');
+  }
+  await sink.flush();
+  await sink.close();
 }
 
 String convertMapToJsonString(Map<String, dynamic> ogMap) {

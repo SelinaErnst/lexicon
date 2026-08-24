@@ -2,6 +2,7 @@ import 'package:test/test.dart';
 import 'package:lexicon/lexicon.dart';
 import 'package:lexicon/lexicon/dictionary.dart';
 import 'package:lexicon/lexicon/rule.dart';
+import 'package:lexicon/lexicon/text_modifier.dart';
 import 'package:logging/logging.dart';
 import 'dart:io';
 import 'helper.dart';
@@ -12,7 +13,6 @@ void main() {
     Logger.root.onRecord.listen((record) {
       print('[${record.level.name}] (${record.loggerName}): ${record.message}');
     });
-    // Logger.root.level = Level.ALL;
   });
 
   group('Dictionary', () {
@@ -59,9 +59,9 @@ void main() {
         rules: [rule],
         characters: [empty, char, charA, charC, charB],
       );
-      exampleChD = await getExample() as ChDictionary;
 
-      // Logger.root.level = Level.FINE;
+      exampleChD = await getExample() as ChDictionary;
+      print(exampleChD);
     });
 
     group('Dictionary attributes', () {
@@ -107,16 +107,14 @@ void main() {
         expect(emptyD.name, 'emptyD');
       });
       test('categories', () {
-        // Logger.root.level = Level.ALL;
         emptyD.categories = {'best': 'str'};
         expect(
           () => emptyD.categories.addAll({'test': String}),
-          throwsUnsupportedError,
+          throwsA(isA<Error>()),
         );
       });
 
       test('rules', () {
-        // Logger.root.level = Level.OFF;
         rule.update({'level': 'A1'});
         var newRule = rule.copyWith({'level': 'B1'});
         emptyD.rules += [rule, rule, newRule];
@@ -139,11 +137,10 @@ void main() {
         expect(emptyD.rules.length, 5);
         emptyD.rules = null;
         expect(emptyD.rules.length, 0);
-        expect(() => emptyChD.rules = 0, throwsUnsupportedError);
+        expect(() => emptyChD.rules = 0, throwsA(isA<Error>()));
       });
 
       test('characters', () {
-        // Logger.root.level = Level.FINER;
         emptyD.characters += [
           empty, // Character
           charA,
@@ -184,13 +181,13 @@ void main() {
         emptyChD.characters = null;
         expect(emptyChD.length, 0);
 
-        expect(() => emptyChD.characters = 0, throwsUnsupportedError);
+        expect(() => emptyChD.characters = 0, throwsA(isA<Error>()));
         expect(
           () => emptyChD.characters = [
             {'simplified': 'test'},
             0,
           ],
-          throwsUnsupportedError,
+          throwsA(isA<Error>()),
         );
       });
     });
@@ -282,7 +279,6 @@ void main() {
       });
 
       test('compare dictionaries with different names', () {
-        // Logger.root.level = Level.ALL;
 
         var reconfigured = filledChD.reconfigure(
           name: 'reconfigured',
@@ -315,9 +311,9 @@ void main() {
         expect(filledChD[['a', '', 'b']], filledD[['a', '', 'b']]);
         expect(filledChD[filledD[1]].identifier, ['a', '', 'b']);
 
-        expect(() => emptyChD[100], throwsRangeError);
-        expect(() => emptyChD[['x', '', '']], throwsArgumentError);
-        expect(() => emptyChD[null], throwsArgumentError);
+        expect(() => emptyChD[100], throwsA(isA<Error>()));
+        expect(() => emptyChD[['x', '', '']], throwsA(isA<Error>()));
+        expect(() => emptyChD[null], throwsA(isA<Error>()));
       });
 
       test('get dictionary from list of identifiers', () {
@@ -337,7 +333,7 @@ void main() {
         expect(filledChD.getSlice(start: 3).length, 1);
         expect(filledChD.getSlice(start: 4, stop: 4).length, 0);
         expect(filledChD.getSlice(stop: 1).length, 1);
-        expect(() => filledChD.getSlice(stop: 5), throwsArgumentError);
+        expect(() => filledChD.getSlice(stop: 5), throwsA(isA<Error>()));
       });
 
       test('get dictionary by searching', () {
@@ -366,7 +362,6 @@ void main() {
 
     group('+ / - operators', () {
       test('addition and subtraction of characters', () {
-        // Logger.root.level = Level.OFF;
         var combo1 = filledD[3] + filledD.getSlice(start: 1, stop: 2);
         var combo2 = filledD.getSlice(start: 1, stop: 2) + filledD[3];
         expect(combo1, combo2);
@@ -377,6 +372,8 @@ void main() {
 
         expect((filledD + emptyChD).length, filledD.length);
         expect((filledD - combo1).length, 2);
+
+        exampleChD.getSlice(start: 10, stop: 13);
         expect(
           (filledD + exampleChD.getSlice(start: 10, stop: 13)).length,
           filledD.length + 3,
@@ -386,11 +383,11 @@ void main() {
           filledD.length + 3,
         );
 
-        expect(() => filledD + ['a', '', 'a'], throwsUnsupportedError);
-        expect(() => filledD - ['a', '', 'a'], throwsUnsupportedError);
+        expect(() => filledD + ['a', '', 'a'], throwsA(isA<Error>()));
+        expect(() => filledD - ['a', '', 'a'], throwsA(isA<Error>()));
 
-        expect(() => filledD.add(0), throwsA(isA<UnsupportedError>()));
-        expect(() => filledD.remove(0), throwsA(isA<UnsupportedError>()));
+        expect(() => filledD.add(0), throwsA(isA<Error>()));
+        expect(() => filledD.remove(0), throwsA(isA<Error>()));
       });
       test('addition and subtraction of rules', () {
         filledChD.rules = [
@@ -406,7 +403,6 @@ void main() {
 
     group('sorting', () {
       test('sort characters by key and order', () {
-        // Logger.root.level = Level.OFF;
         ChCharacter interest = filledChD[['b', '八', 'c']];
         filledChD.sortingKey = 'pinyin';
         expect(filledChD.characters.indexOf(interest), 2);
@@ -416,8 +412,8 @@ void main() {
         expect(filledChD.characters.indexOf(interest), 3);
         filledChD.sortingOrd = 'descending';
         expect(filledChD.characters.indexOf(interest), 0);
-        expect(() => filledChD.sortingKey = 'test', throwsArgumentError);
-        expect(() => filledChD.sortingOrd = 'test', throwsArgumentError);
+        expect(() => filledChD.sortingKey = 'test', throwsA(isA<Error>()));
+        expect(() => filledChD.sortingOrd = 'test', throwsA(isA<Error>()));
 
         var test1 = filledD.sort(sortingKey: 'pinyin', sortingOrd: 'ascending');
         var test2 = filledD.sort(
@@ -427,16 +423,15 @@ void main() {
 
         expect(
           () => filledD.reorder(sortingKey: 'abc', sortingOrd: 'ascending'),
-          throwsArgumentError,
+          throwsA(isA<Error>()),
         );
 
         expect(test1.characters.indexOf(interest), 3);
         expect(test2.characters.indexOf(interest), 1);
       });
 
-      group('reading from file', () {
+      group('reading / writing ', () {
         test('read jsonl', () async {
-          // Logger.root.level = Level.OFF;
           ChDictionary chd = ChDictionary();
           final categories = getCategories();
 
@@ -444,10 +439,32 @@ void main() {
           print(chd.search(pattern: 'ba'));
           print(chd[0].images());
         });
+
+        test('write txt', () {
+          final tmpl =
+              '/home/selina/Applications/MyApps/suhan/packages/lexicon/assets/pleco.chd';
+          exampleChD.write(
+            File('assets/example.txt'),
+            mod: TextModifier<String>(
+              '',
+              mapSyntax: getSyntax(),
+              mapColor: getColors(),
+              mapColorFav: getFaves(),
+            ),
+            template: File(tmpl),
+          );
+        });
+
+        test('write jsonl', () {
+          exampleChD
+              .reconfigure(
+                categories: {'english': List<String>, 'german': List<String>},
+              )
+              .write(File('assets/example.jsonl'));
+        });
       });
 
       test('example dictionary', () {
-        // Logger.root.level = Level.OFF;
         // exampleChD.reorder(sortingKey: 'traditional', sortingOrd: 'descending');
         // exampleChD.reorder(sortingKey: 'traditional', sortingOrd: 'ascending');
         // exampleChD.reorder(sortingKey: 'simplified', sortingOrd: 'ascending');

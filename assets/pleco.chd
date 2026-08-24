@@ -1,0 +1,33 @@
+<H:[b|grey|hidden]:TRANSLATION>
+<LEFT>{
+<H:[nb|blue|available]:ENG ><L:[point|l|normal]:english><E>
+<H:[nb|blue|available]:GER ><L:[point|l|normal]:german><E>
+<H:[nb|teal|available]:MW ><L:[point|l|normal]:measure_word><E>
+<H:[nb|teal|available]:RAD ><L:[point|l|normal]:radical><E>
+<H:[nb|green|available]:OPP ><L:[point|l|normal]:opposite><E>
+}<E>
+<H:[b|grey|available]:INFORMATION>
+<INDENT>{
+<H:[nb|grey|available]:CLASSIFIER: ><L:[dot|l|normal]:classifier><E>
+<H:[nb|grey|available]:VARIANTS: ><L:[dot|l|normal]:variants><E>
+<H:[nb|grey|available]:DISTINGUISH FROM: ><L:[dot|l|normal]:confusables><E>
+<H:[nb|grey|available]:DICTIONARY ENTRIES: ><N><L_LINK:[dot|l|normal]:grammar><E>
+}<E>
+<H:[b|grey|available]:CHARACTER>
+<INDENT>{
+<H:[nb|grey|available]:STROKES: ><(><I:[n|none|normal]:strokes_count><)><T:[n|none|normal]:strokes><E>
+<H:[nb|grey|available]:COMPONENTS: ><N><L:[point|nl|normal]:components><E>
+<H:[nb|grey|available]:MNEMONICS: ><L:[point|l|normal]:mnemonics><E>
+<H:[nb|grey|available]:MEANING AS COMPONENT: ><L:[point|l|normal]:usage><E>
+<H:[nb|grey|available]:ORIGINS: ><T:[n|none|normal]:origin><E>
+<H:[nb|grey|available]:ANCIENT FORM: ><L:[none|l|big]:ancient><E>
+}<E>
+<H:[b|grey|available]:OCCURENCES>
+<INDENT>{
+<H:[nb|grey|available]:RELATIVES: ><L:[dot|l|normal]:relatives><E>
+<H:[nb|grey|available]:WORDS: ><L:[dot|l|normal]:words><E>
+}<E>
+<H:[b|grey|hidden]:LINKS>
+<RIGHT>{
+<L_LINK:[none|nl|small]:links><E>
+}<E>

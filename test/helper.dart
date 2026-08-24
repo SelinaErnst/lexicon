@@ -4,6 +4,7 @@ import 'package:lexicon/lexicon/utils.dart';
 
 Map<String, dynamic> getSyntax() {
   return readJSONSync(File('assets/syntax.json'));
+  // return readJSONSync(File('assets/syntax_help.json'));
 }
 
 Map<String, dynamic> getColors() {

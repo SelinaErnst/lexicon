@@ -11,7 +11,6 @@ void main() async {
   Logger.root.onRecord.listen((record) {
     print('[${record.level.name}] (${record.loggerName}): ${record.message}');
   });
-  // Logger.root.level = Level.ALL;
 
   final synatxMap = readJSONSync<Map<String, dynamic>>(
     File('assets/syntax.json'),

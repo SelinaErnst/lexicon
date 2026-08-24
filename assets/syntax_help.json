@@ -21,7 +21,7 @@
             "nl"
         ],
         "syntax": [
-            ""
+            " #NL "
         ]
     },
     "tab": {
@@ -29,7 +29,7 @@
             "tab"
         ],
         "syntax": [
-            ""
+            " #T "
         ]
     },
     "bracket": {
@@ -37,8 +37,8 @@
             "bracket"
         ],
         "syntax": [
-            "[",
-            "]"
+            " #",
+            " #"
         ]
     },
     "link": {
@@ -46,8 +46,8 @@
             "link"
         ],
         "syntax": [
-            "",
-            ""
+            " #L1 ",
+            " #L2 "
         ]
     },
     "italic": {
@@ -56,8 +56,8 @@
             "it"
         ],
         "syntax": [
-            "",
-            ""
+            " #I1 ",
+            " #I2 "
         ]
     },
     "underline": {
@@ -66,8 +66,8 @@
             "u"
         ],
         "syntax": [
-            "",
-            ""
+            " #U1 ",
+            " #U2 "
         ]
     },
     "bold": {
@@ -76,8 +76,8 @@
             "b"
         ],
         "syntax": [
-            "",
-            ""
+            " #B1 ",
+            " #B2 "
         ]
     },
     "narrow_bold": {
@@ -86,8 +86,8 @@
             "nb"
         ],
         "syntax": [
-            "",
-            ""
+            " #NB1 ",
+            " #NB2 "
         ]
     },
     "slightly_bold": {
@@ -96,8 +96,8 @@
             "sb"
         ],
         "syntax": [
-            "",
-            ""
+            " #SB1 ",
+            " #SB2 "
         ]
     },
     "bg": {
@@ -105,8 +105,8 @@
             "bg"
         ],
         "syntax": [
-            "",
-            ""
+            " #BG1 ",
+            " #BG2 "
         ]
     },
     "textsmall": {
@@ -116,8 +116,8 @@
             "small"
         ],
         "syntax": [
-            "AA00",
-            ""
+            " #SMALL1 ",
+            " #SMALL2 "
         ]
     },
     "textbig": {
@@ -127,8 +127,8 @@
             "big"
         ],
         "syntax": [
-            "AA10",
-            ""
+            " #BIG1 ",
+            " #BIG2 "
         ]
     },
     "color": {
@@ -136,8 +136,8 @@
             "color"
         ],
         "syntax": [
-            "",
-            ""
+            " #C1 ",
+            " #C2 "
         ]
     },
     "block": {
@@ -145,8 +145,8 @@
             "block"
         ],
         "syntax": [
-            "",
-            ""
+            " #BL1 ",
+            " #BL2 "
         ]
     },
     "left": {
@@ -154,7 +154,7 @@
             "left"
         ],
         "syntax": [
-            "1A0A"
+            " #LEFT "
         ]
     },
     "right": {
@@ -162,7 +162,7 @@
             "right"
         ],
         "syntax": [
-            " A0P"
+            " #RIGHT "
         ]
     },
     "indent": {
@@ -170,7 +170,7 @@
             "indent"
         ],
         "syntax": [
-            "1A0P"
+            " #IND "
         ]
     },
     "line": {
@@ -178,7 +178,7 @@
             "line"
         ],
         "syntax": [
-            "AAAA"
+            " #LINE "
         ]
     },
     "point": {
@@ -204,7 +204,7 @@
             "mark"
         ],
         "syntax": [
-            "uA0Z"
+            " #MARK "
         ]
     },
     "markline": {
@@ -212,7 +212,7 @@
             "markline"
         ],
         "syntax": [
-            "zA0Z"
+            " #MARKL "
         ]
     }
 }

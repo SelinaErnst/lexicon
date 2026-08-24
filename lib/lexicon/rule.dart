@@ -47,7 +47,6 @@ class Rule extends Character with CopyEngine<Rule> {
     Map<String, dynamic>? mapColor,
     Map<String, dynamic>? mapColorFav,
   }) {
-    
     data['characters'] = Dictionary(
       name: 'ruleCharacters',
       baseCategories: ['simplified', 'traditional', 'pinyin'],
@@ -194,7 +193,8 @@ class Rule extends Character with CopyEngine<Rule> {
 
   @override
   Dictionary operator +(other) {
-    throw UnsupportedError('operator + is not available for Rule.');
+    _log.shout('Operator + is not available for Rule.');
+    throw Error();
   }
 
   @override

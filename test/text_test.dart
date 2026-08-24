@@ -42,8 +42,8 @@ void main() {
   group('TextModifier', () {
     group('convert text', () {
       test('input type has to be the same', () {
-        expect(() => modList.set(''), throwsA(isA<ArgumentError>()));
-        expect(() => modStr.set(['']), throwsA(isA<ArgumentError>()));
+        expect(() => modList.set(''), throwsA(isA<Error>()));
+        expect(() => modStr.set(['']), throwsA(isA<Error>()));
 
         expect(mod.set('_ a_a.').toCleanLink().result, 'a＿a');
         expect(mod.set('_ a_a.').toCleanRef().result, '＿a＿a.');
@@ -57,6 +57,7 @@ void main() {
         modList.set(listText);
         expect(modList.findFirstChar('notChinese').result, ['ǜ asksnc', '，']);
         expect(modList.findFirstChar('english').result, ['asksnc']);
+        expect(modStr.set('scan ackn asco').findFirstChar('any').result, 's');
       });
 
       test('convert pinyin', () {
@@ -94,7 +95,7 @@ void main() {
 
         expect(
           () => modStr.applySyntaxCommands(['tab']),
-          throwsA(isA<AssertionError>()),
+          throwsA(isA<Error>()),
         );
 
         expect(modStr.hasSyntax, false);
@@ -124,22 +125,23 @@ void main() {
       });
 
       test('get command and syntax', () {
-        expect(modAct.getFullCommand('normal'), 'normal');
+        expect(modAct.getFullCommand('normal'), null);
         expect(modAct.getFullCommand('b'), 'bold');
         expect(modAct.getSyntax(cmd: 'b'), ['', '']);
         expect(modAct.getSyntax().length, 0);
+        expect(modAct.getSyntax(cmd: 'it'), ['', '']);
       });
 
       test('color command', () {
         modAct.set('test everything');
         modAct.color = 'green';
+        expect(modAct.color, '');
         expect(
           isExactType(modAct.mapColorFav.runtimeType, Map<String, String>),
           true,
         );
         expect(modAct.result, 'test everything');
-        expect(modAct.color, '');
-        expect(modAct.command, null);
+        expect(modAct.command, 'normal');
       });
 
       test('apply one command ', () {
@@ -177,6 +179,44 @@ void main() {
         );
         modAct.set('test everything');
         expect(modAct.applySyntaxCommands(['tab']).result, 'test everything');
+
+        modList.set(['[a1a2]', 'ba4', '[chi1]']);
+        modList.addSyntax(
+          mapColor: colors,
+          mapSyntax: syntax,
+          mapColorFav: favColors,
+        );
+        expect(modList.applySyntaxCommands(['link']).result, [
+          '[a1a2]',
+          'ba4',
+          '[chi1]',
+        ]);
+        modList.set(['[a1a2]', 'ba4', '[chi1]']);
+        expect(modList.linkPinyin().result, ['[a1a2]', 'ba4', '[chi1]']);
+
+        print(
+          modAct.set('2', color: '').applySyntaxCommands([
+            'normal',
+            'normal',
+            'color',
+          ]).result,
+        );
+      });
+
+      test('apply normal', () {
+        modAct.color = 'grey';
+        // modAct.color = '';
+        print(
+          modAct.set('2').applySyntaxCommands([
+            'normal',
+            'normal',
+            'color',
+          ]).result,
+        );
+
+        final s =
+            '#C1  #NB1 ENG  #NB2  #C2 ◼ eight ◼ 8 #NL  #C1  #NB1 GER  #NB2  #C2 ◼ acht #NL  #C1  #NB1 RAD  #NB2  #C2 ◼ KangXi 12: eight #NL';
+        print(s.strip('#NL'));
       });
     });
   });

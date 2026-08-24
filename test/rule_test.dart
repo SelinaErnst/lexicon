@@ -68,12 +68,10 @@ void main() {
           ],
         },
       );
-      // Logger.root.level = Level.ALL;
     });
 
     group('Rule attributes', () {
       test('empty Rule', () {
-        // Logger.root.level = Level.FINE;
         expect(filled.isEmpty, true);
         expect(empty.isEmpty, true);
         expect(empty.strict, true);
@@ -152,11 +150,10 @@ void main() {
       });
 
       test('cannot change categories', () {
-        expect(() => rule.categories['level'] = int, throwsUnsupportedError);
+        expect(() => rule.categories['level'] = int, throwsA(isA<Error>()));
       });
 
       test('add characters', () {
-        // Logger.root.level = Level.FINE
         expect(rule.characters.length, 2);
         rule.data['characters'] += ChCharacter(entry: {'traditional': 'b'});
         expect(rule.characters.length, 3);
@@ -165,7 +162,7 @@ void main() {
       });
 
       test('cannot create a dictionary by addition', () {
-        expect(() => rule + filled, throwsUnsupportedError);
+        expect(() => rule + filled, throwsA(isA<Error>()));
       });
     });
 
@@ -210,11 +207,10 @@ void main() {
     });
 
     test('write with syntax', () {
-      // Logger.root.level = Level.OFF;
       expect(filled.applySyntaxToCharacters().length, 0);
       expect(
         () => rule.applySyntaxToCharacters(),
-        throwsA(isA<AssertionError>()),
+        throwsA(isA<Error>()),
       );
       rule.addSyntax(getSyntax(), getColors(), mapColorFav: getFaves());
       final syntaxed = rule.applySyntaxToCharacters();

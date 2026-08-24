@@ -18,7 +18,7 @@ void main() async {
   /* –––––––––––––––––––––––– dictionary init ––––––––––––––––––––––– */
   ChDictionary dictionary = ChDictionary();
   dictionary.addSyntax(synatxMap, colorMap);
-  await dictionary.read(File('assets/MCD.jsonl'), categories: catMap);
+  dictionary.read(File('assets/MCD.jsonl'), categories: catMap);
   /* –––––––––––––––––––––––– dictionary init ––––––––––––––––––––––– */
 
   // print(dictionary.getSlice(stop: 10));

@@ -1,3 +1,4 @@
+import 'package:lexicon/lexicon/template_renderer.dart';
 import 'package:logging/logging.dart';
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
@@ -134,9 +135,6 @@ class Dictionary<C extends Character> extends Iterable<C> {
     _log.finer('Compare Dictionary $headString to ${other.runtimeType}');
     if (identical(this, other)) return true;
     if (other is! Dictionary) return false;
-    _log.finest(
-      'Compare Dictionary $headString to other Dictionary ${other.headString}',
-    );
     const charEquality = UnorderedIterableEquality<Character>();
     const ruleEquality = UnorderedIterableEquality<Rule>();
     return name == other.name &&
@@ -149,12 +147,11 @@ class Dictionary<C extends Character> extends Iterable<C> {
   }
 
   Dictionary operator -(dynamic other) {
-    _log.fine('Substract from Dictionary $headString');
+    _log.fine('Substract ${other.runtimeType} from Dictionary $headString');
 
     if (other is! Character && other is! Dictionary) {
-      throw UnsupportedError(
-        'Subtraction is not supported for type ${other.runtimeType}',
-      );
+      _log.shout('Subtraction is not supported for type ${other.runtimeType}');
+      throw Error();
     }
 
     var copyDict = copy();
@@ -163,12 +160,11 @@ class Dictionary<C extends Character> extends Iterable<C> {
   }
 
   Dictionary operator +(dynamic other) {
-    _log.fine('Add to Dictionary $headString');
+    _log.fine('Add ${other.runtimeType} to Dictionary $headString');
 
     if (other is! Character && other is! Dictionary) {
-      throw UnsupportedError(
-        'Addition is not supported for type ${other.runtimeType}',
-      );
+      _log.shout('Addition is not supported for type ${other.runtimeType}');
+      throw Error();
     }
 
     var copyDict = copy();
@@ -201,9 +197,10 @@ class Dictionary<C extends Character> extends Iterable<C> {
         List.generate((stopInt - startInt), (i) => startInt + i),
       );
     }
-    throw ArgumentError(
-      'Dictionary $headString cannot be sliced by index [$startInt,$stopInt]',
+    _log.shout(
+      'Dictionary $headString cannot be sliced by index [$startInt,$stopInt].',
     );
+    throw Error();
   }
 
   Dictionary getSubset(List<dynamic> identifier) {
@@ -231,18 +228,18 @@ class Dictionary<C extends Character> extends Iterable<C> {
     if (identifier is List<String>) {
       const listEquality = ListEquality<dynamic>();
       if (!_charactersID.containsElement(identifier)) {
-        throw ArgumentError(
-          'Character was not found based on identifer: $identifier.',
-        );
+        _log.shout('Character was not found based on identifer: $identifier.');
+        throw Error();
       }
       for (final char in characters) {
         if (listEquality.equals(char.identifier, identifier)) return char;
       }
     }
     // return null;
-    throw ArgumentError(
+    _log.shout(
       'Invalid Type of identifier used for indexing: ${identifier.runtimeType}',
     );
+    throw Error();
   }
 
   /* ================================================================ */
@@ -254,6 +251,10 @@ class Dictionary<C extends Character> extends Iterable<C> {
     Map<String, dynamic>? mapColor, {
     Map<String, dynamic>? mapColorFav,
   }) {
+    if (mapSyntax != null) _log.finest('Add command syntax to Dictionary');
+    if (mapColor != null) _log.finest('Add colors to Dictionary.');
+    if (mapColorFav != null) _log.finest('Add favourite colors to Dictionary.');
+
     _mapColor = mapColor;
     _mapSyntax = mapSyntax;
     _mapColorFav = mapColorFav;
@@ -267,8 +268,8 @@ class Dictionary<C extends Character> extends Iterable<C> {
 
   set categories(Map<String, dynamic> newCategories) {
     if (newCategories.isNotEmpty) {
-      _log.finer(
-        'Set new categories with keys: ${newCategories.keys.join(', ')}',
+      _log.finest(
+        'Add categories to Dictionary: ${newCategories.keys.join(', ')}',
       );
     }
     _categories = newCategories.map((key, value) {
@@ -323,14 +324,15 @@ class Dictionary<C extends Character> extends Iterable<C> {
       character = _listItem(entry: entry);
     } else if (entry is Character) {
       try {
-        character = entry as C;
+        character = entry.reconfigure(specs: categories) as C;
       } catch (e) {
         character = _listItem(entry: entry.data);
       }
     } else {
-      throw UnsupportedError(
+      _log.shout(
         'Cannot convert $entry to $C. Unsupported type: ${entry.runtimeType}',
       );
+      throw Error();
     }
     return character;
   }
@@ -347,9 +349,10 @@ class Dictionary<C extends Character> extends Iterable<C> {
     } else if (entry is Rule) {
       rule = entry;
     } else {
-      throw UnsupportedError(
+      _log.shout(
         'Cannot convert $entry to Rule. Unsupported type: ${entry.runtimeType}',
       );
+      throw Error();
     }
     return rule;
   }
@@ -385,6 +388,10 @@ class Dictionary<C extends Character> extends Iterable<C> {
     Rule rule = _convertRuleItem(entry);
     if (!rule.isEmpty && !_rulesID.containsElement(rule)) {
       _rules.add(rule);
+    } else {
+      _log.finest(
+        'Addition Ignored: Rule $entry is either empty or exists already.',
+      );
     }
   }
 
@@ -392,10 +399,17 @@ class Dictionary<C extends Character> extends Iterable<C> {
     Rule rule = _convertRuleItem(entry);
     if (!rule.isEmpty && _rulesID.containsElement(rule)) {
       _rules.remove(rule);
+    } else {
+      _log.finest(
+        'Remove Ignored: Rule $entry is either empty or exists already.',
+      );
     }
   }
 
   void _setCharacters(dynamic charList) {
+    _log.finest(
+      'Add characters to Dictionary: ${charList.runtimeType}',
+    );
     if (charList is List) {
       try {
         charList = List<Character>.from(charList);
@@ -421,22 +435,23 @@ class Dictionary<C extends Character> extends Iterable<C> {
       charList = List<Character>.from(charList.characters);
       _characters = charList.map((char) => _convertListItem(char)).toList();
     } else if (charList is C && charList.isNotEmpty) {
-      _characters = [charList];
+      _characters = [charList.reconfigure(specs: categories) as C];
     } else if (charList == null) {
       _characters = [];
     } else {
-      throw UnsupportedError(
-        'Unsupported type for set up of dictionary characters: ${charList.runtimeType}',
+      _log.shout(
+        'Unsupported type for dictionary characters: ${charList.runtimeType}',
       );
+      throw Error();
     }
 
-    _log.fine('Create Character List of Dictionary $headString.');
+    _log.fine('Successfully created Character List of Dictionary $headString.');
   }
 
   void setLinkedRule(Rule rule) => _rules = [rule];
 
   void _setRules(dynamic ruleList) {
-    _log.fine('Create Rule List of Dictionary $headString.');
+    _log.finest('Add rules to Dictionary $headString: ${ruleList.runtimeType}');
     if (ruleList is List) {
       try {
         ruleList = List<Rule>.from(ruleList);
@@ -461,13 +476,15 @@ class Dictionary<C extends Character> extends Iterable<C> {
     } else if (ruleList == null) {
       _rules = [];
     } else {
-      throw UnsupportedError(
-        'Unsupported type for set up of dictionary characters: ${ruleList.runtimeType}',
+      _log.shout(
+        'Unsupported type for dictionary characters: ${ruleList.runtimeType}',
       );
+      throw Error();
     }
   }
 
   void remove(dynamic other) {
+    _log.finer('Remove ${other.runtimeType} from Dictionary $headString');
     if (other is Rule) {
       _rmRule(other);
     } else if (other is Character) {
@@ -485,7 +502,7 @@ class Dictionary<C extends Character> extends Iterable<C> {
   }
 
   void add(dynamic other, {bool ordered = true}) {
-    _log.fine('Add ${other.runtimeType} to Dictionary $headString');
+    _log.finer('Add ${other.runtimeType} to Dictionary $headString');
     // adds to current dictionary
     // but without creating a new instance and without sorting
 
@@ -504,9 +521,6 @@ class Dictionary<C extends Character> extends Iterable<C> {
       for (final char in other.characters) {
         _addCharacter(char);
       }
-      // for (final rule in other.rules) {
-      //   _addRule(rule);
-      // }
     } else if (other is List) {
       final cached = _characters;
       _setCharacters(other);
@@ -597,12 +611,14 @@ class Dictionary<C extends Character> extends Iterable<C> {
   }
 
   Dictionary sort({String? sortingKey, String? sortingOrd}) {
+    _log.fine('Create sorted Dictionary by $sortingKey in $sortingOrd order');
     var sorted = copy();
     sorted.reorder(sortingKey: sortingKey, sortingOrd: sortingOrd);
     return sorted;
   }
 
   void reorder({String? sortingKey, String? sortingOrd}) {
+    _log.fine('Sort Dictionary by $sortingKey in $sortingOrd order');
     final resolvedKey = (sortingKey == null || sortingKey.isEmpty)
         ? _sortKey
         : sortingKey.toLowerCase();
@@ -623,10 +639,6 @@ class Dictionary<C extends Character> extends Iterable<C> {
       isValid(resolvedOrd, _sortOrder, funcName: 'sort', argName: 'sortingOrd');
       _sortKey = resolvedKey;
       _sortOrd = resolvedOrd;
-
-      _log.fine(
-        'Sorting the Dictionary $headString based on key "$resolvedKey", and order "$resolvedOrd".',
-      );
 
       characters.sort((firstChar, secondChar) {
         final first = firstChar[resolvedKey] as String;
@@ -649,6 +661,10 @@ class Dictionary<C extends Character> extends Iterable<C> {
     List<String> searchCategories = const [],
     bool exact = true,
   }) {
+    _log.fine(
+      'Search Dictionary categories "$searchCategories" for pattern: $pattern',
+    );
+
     bool contentContains(String pattern, String content) {
       String cleanPattern = pattern.toLowerCase();
       String cleanContent = content.toLowerCase();
@@ -690,10 +706,6 @@ class Dictionary<C extends Character> extends Iterable<C> {
       return false;
     }
 
-    _log.finer(
-      'Search dictionary categories "$searchCategories" for pattern: $pattern',
-    );
-
     final matches = _characters
         .where(
           (Character char) => categoryContains(pattern, searchCategories, char),
@@ -709,7 +721,9 @@ class Dictionary<C extends Character> extends Iterable<C> {
 
   Dictionary readSync(File file) {
     if (!file.existsSync()) {
-      throw FileSystemException('Dictionary file does not exist', file.path);
+      // throw FileSystemException('Dictionary file does not exist', file.path);
+      _log.shout('Dictionary file does not exist.');
+      throw Error();
     }
     return this;
   }
@@ -722,7 +736,7 @@ class Dictionary<C extends Character> extends Iterable<C> {
     return entry;
   }
 
-  Future<bool> read(
+  Future<void> read(
     File file, {
     bool add = true,
     Map<String, dynamic>? categories,
@@ -730,11 +744,13 @@ class Dictionary<C extends Character> extends Iterable<C> {
     String? name,
     String? template,
   }) async {
+    _log.fine('Read file: ${getFileName(file)}');
+
     if (categories != null) this.categories = categories;
 
-    String directory = getDirectory(file);
-    String filename = getFileName(file);
-    String ext = getExtension(file);
+    final String directory = getDirectory(file);
+    final String filename = getFileName(file);
+    final String ext = getExtension(file);
 
     if (ext.isNotEmpty) format = ext;
     String? fileFormat = getExt(format);
@@ -743,11 +759,17 @@ class Dictionary<C extends Character> extends Iterable<C> {
       if (format != null) {
         isValid(format, _expOptions, funcName: 'read', argName: 'format');
       }
-      return false;
+      _log.shout(
+        'A valid file format is required. The options are: ${_extOptions.keys.toList()}',
+      );
+      throw Error();
     }
 
     File targetFile = File(p.join(directory, '$filename$fileFormat'));
-    if (!targetFile.existsSync()) return false;
+    if (!targetFile.existsSync()) {
+      _log.shout('File does not exist.');
+      throw Error();
+    }
 
     final success = switch (fileFormat) {
       '.txt' => await () async {
@@ -759,7 +781,10 @@ class Dictionary<C extends Character> extends Iterable<C> {
       }(),
       _ => false,
     };
-    return success;
+    if (success == false) {
+      _log.shout('Unsuccessful attempt at reading file to dictionary.');
+      throw Error();
+    }
   }
 
   Future<bool> _readTXT(
@@ -767,20 +792,38 @@ class Dictionary<C extends Character> extends Iterable<C> {
     String template = '',
     bool add = true,
   }) async {
+    _log.fine('Read .txt file.');
     return false;
   }
 
   Future<bool> _readJSONL(File file, {bool add = true}) async {
+    _log.fine('Read .jsonl file.');
     try {
       if (!add) empty();
       final List<Character> jsonlCharacters = [];
 
-      final lines = await file.readAsLines();
-      for (String line in lines) {
-        if (line.trim().isEmpty) continue;
-        Map<String, dynamic> entry = json.decode(line) as Map<String, dynamic>;
+      final stream = file
+          .openRead()
+          .transform(utf8.decoder)
+          .transform(const LineSplitter());
+
+      await for (final String line in stream) {
+        // Fast check for empty or whitespace-only lines without creating a new string via .trim()
+        if (line.isEmpty ||
+            line.runes.every((r) => r == 32 || r == 9 || r == 10 || r == 13)) {
+          continue;
+        }
+        final Map<String, dynamic> entry =
+            json.decode(line) as Map<String, dynamic>;
         jsonlCharacters.add(_listItem(entry: _updateEntry(entry)));
       }
+      // final lines = await file.readAsLines();
+      // for (String line in lines) {
+      //   if (line.trim().isEmpty) continue;
+      //   Map<String, dynamic> entry = json.decode(line) as Map<String, dynamic>;
+      //   jsonlCharacters.add(_listItem(entry: _updateEntry(entry)));
+      // }
+
       _setCharacters(jsonlCharacters);
       reorder();
       return true;
@@ -790,6 +833,107 @@ class Dictionary<C extends Character> extends Iterable<C> {
   }
 
   Future<bool> _readDB(File file, {String? name, bool add = true}) async {
+    _log.fine('Read .db file.');
+    return false;
+  }
+
+  /* ================================================================ */
+  /*                               WRITE                              */
+  /* ================================================================ */
+
+  void write(
+    File file, {
+    String? format,
+    bool overwrite = true,
+    File? template,
+    List<String>? categories,
+    TextModifier<String>? mod,
+  }) async {
+    _log.fine('Write to file: ${getFileName(file)}');
+
+    final String directory = getDirectory(file);
+    final String filename = getFileName(file);
+    final String ext = getExtension(file);
+
+    final List<String>? selectedCategories = categories;
+
+    if (ext.isNotEmpty) format = ext;
+    String? fileFormat = getExt(format);
+
+    if (fileFormat == null) {
+      format = format ?? 'none';
+      isValid(format, _expOptions, funcName: 'write', argName: 'format');
+    }
+
+    File targetFile = File(p.join(directory, '$filename$fileFormat'));
+
+    final success = switch (fileFormat) {
+      '.txt' => await () async {
+        isArgument(template, File, argName: 'template', funcName: 'write');
+        isArgument(
+          mod,
+          TextModifier<String>,
+          argName: 'mod',
+          funcName: 'write',
+        );
+        return await _toTXT(targetFile, template!, selectedCategories, mod!);
+      }(),
+      '.jsonl' => await _toJSONL(targetFile),
+      '.db' => await _toDB(targetFile, overwrite: overwrite),
+      _ => false,
+    };
+    if (success == false) {
+      _log.shout('Unsuccessful attempt at writing a dictionary to file.');
+      throw Error();
+    }
+  }
+
+  Future<bool> _toTXT(
+    File file,
+    File template,
+    List<String>? categories,
+    TextModifier<String> mod,
+  ) async {
+    _log.fine('Write to .txt file.');
+
+    if (getExtension(file) != '.txt') {
+      _log.warning('File is in the incorrect format: ${getExtension(file)}');
+      return false;
+    }
+    Writer w = Writer(mod, tmplFile: template);
+    final lines = characters.map((char) => w.compile(char).result).toList();
+    try {
+      writeListToFile(lines, file);
+      return true;
+    } catch (e) {
+      _log.warning(e);
+      return false;
+    }
+  }
+
+  Future<bool> _toJSONL(File file) async {
+    _log.fine('Write to .jsonl file.');
+
+    final lines = characters.map((char) => char.toMap()).toList();
+    // print(lines);
+    try {
+      final IOSink sink = file.openWrite(mode: FileMode.write, encoding: utf8);
+      final int len = lines.length;
+      for (int i = 0; i < len; i++) {
+        sink.write('${json.encode(lines[i]).toString()}\n');
+      }
+      await sink.flush();
+      await sink.close();
+      return true;
+    } catch (e) {
+      _log.warning(e);
+      return false;
+    }
+  }
+
+  Future<bool> _toDB(File file, {bool overwrite = true}) async {
+    _log.fine('Write to .db file.');
+
     return false;
   }
 }
@@ -818,6 +962,9 @@ class ChDictionary extends Dictionary<ChCharacter> {
     String? sortingKey,
     String? sortingOrd,
   }) {
+    _log.finer(
+      'Create instance of ChDictionary $headString with other characters.',
+    );
     return ChDictionary(
       name: name ?? this.name,
       characters:
@@ -835,6 +982,8 @@ class ChDictionary extends Dictionary<ChCharacter> {
 
   @override
   void reorder({String? sortingKey, String? sortingOrd}) {
+    _log.fine('Sort ChDictionary by $sortingKey in $sortingOrd order');
+
     final resolvedKey = (sortingKey == null || sortingKey.isEmpty)
         ? _sortKey
         : sortingKey.toLowerCase();
@@ -899,6 +1048,8 @@ class ChDictionary extends Dictionary<ChCharacter> {
     List<String> categories = const [],
     bool exact = true,
   }) {
+    _log.fine('Search ChDictionary for pattern: $pattern');
+
     if (categories.isNotEmpty) {
       return searchCategory(
         pattern: pattern,
@@ -976,6 +1127,7 @@ class ChDictionary extends Dictionary<ChCharacter> {
 
   @override
   Map<String, dynamic> _updateEntry(Map<String, dynamic> entry) {
+    _log.finest('Character entry is changed (during reading of file).');
     if (entry.containsKey('simple')) entry['simplified'] = entry['simple'];
     if (entry.containsKey('pronunciation')) {
       entry['pinyin'] = entry['pronunciation'];

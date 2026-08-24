@@ -6,8 +6,8 @@ final Logger _log = Logger('TextModifierLog');
 class TextModifier<T extends Object> {
   T _input;
   T result;
-  String? _fullCommand;
-  String? _colorVal;
+  String _fullCommand;
+  String _colorVal;
 
   TextModifier? _actString;
 
@@ -21,13 +21,41 @@ class TextModifier<T extends Object> {
     'chinese': RegExp('([$isChineseChar]+)', unicode: true),
     'notChinese': RegExp('([^$isChineseChar]+)', unicode: true),
     'english': RegExp(r'([a-zA-Z]+)'),
+    // 'any' : RegExp('([\\w|$unassignedExtensions])'),
+    'any': RegExp(
+      '([\\w|$unassignedExtensions|$isChineseChar])',
+      unicode: true,
+    ),
   };
 
   /* ================================================================ */
   /*                            CONSTRUCTOR                           */
   /* ================================================================ */
 
-  TextModifier(this._input, {this.transform}) : result = _input;
+  TextModifier(
+    this._input, {
+    this.transform,
+    Map<String, dynamic>? mapSyntax,
+    Map<String, dynamic>? mapColor,
+    Map<String, dynamic>? mapColorFav,
+    TextModifier? mod,
+  }) : result = _input,
+       _colorVal = '',
+       _fullCommand = _defaultCommand {
+    if (mod != null) {
+      addSyntax(
+        mapSyntax: mod.mapSyntax,
+        mapColor: mod.mapColor,
+        mapColorFav: mod.mapColorFav,
+      );
+    } else {
+      addSyntax(
+        mapSyntax: mapSyntax,
+        mapColor: mapColor,
+        mapColorFav: mapColorFav,
+      );
+    }
+  }
 
   TextModifier<T> copyWith({
     T? input,
@@ -52,15 +80,16 @@ class TextModifier<T extends Object> {
 
   TextModifier<T> set(dynamic input, {String? command, String? color}) {
     if (input is! T) {
-      throw ArgumentError(
-        'input for TextModifier<$T> cannot be ${input.runtimeType}',
-      );
+      _log.shout('input for TextModifier<$T> cannot be ${input.runtimeType}');
+      throw Error();
     } else {
       _input = input;
       result = input;
     }
-    if (command != null) _fullCommand = getFullCommand(command);
-    if (color != null) _colorVal = _getColor(color);
+    if (command != null) {
+      _fullCommand = getFullCommand(command) ?? _defaultCommand;
+    }
+    if (color != null) _colorVal = getColor(color) ?? '';
     return this;
   }
 
@@ -91,7 +120,10 @@ class TextModifier<T extends Object> {
   }
 
   void _warnMissingSyntax() {
-    if (!hasSyntax) throw AssertionError('Syntax has not been added yet.');
+    if (!hasSyntax) {
+      _log.shout('Syntax has not been added yet.');
+      throw Error();
+    }
   }
 
   bool get hasSyntax => mapColor != null && mapSyntax != null;
@@ -114,6 +146,7 @@ class TextModifier<T extends Object> {
   /* ================================================================ */
 
   T _process(String Function(String) worker, {bool ignoreEmpty = true}) {
+    _log.finest('Process input of type ${result.runtimeType}');
     T processedResult;
     if (result is String) {
       processedResult = worker(result as String) as T;
@@ -127,7 +160,7 @@ class TextModifier<T extends Object> {
         }
       }
       processedResult = processing as T;
-    } else if (result is List<String>) {
+    } else if (result is List && (result as List).isAllStrings) {
       final List<String> processing = [];
       for (final dynamic element in result as List) {
         final String processed = worker(element.toString());
@@ -195,7 +228,6 @@ class TextModifier<T extends Object> {
       argName: 'language',
       funcName: 'toSentence',
     );
-
     result = _process((sentence) {
       String processed = sentence;
       for (var entry in _punctuationMap.entries) {
@@ -444,15 +476,20 @@ class TextModifier<T extends Object> {
   }
 
   TextModifier<T> applyCommand({bool ignoreEmpty = false}) {
+    _log.finest('Command is applied: $command');
+    final List<String> activeSyntax = getSyntax(cmd: command);
+    final activeColor = color;
     result = _process((text) {
-      final List<String> activeSyntax = getSyntax(cmd: command);
-      final activeColor = color;
       if (text.isEmpty) return text;
       String processed = text;
-      if (command == _colorCommand && activeColor != null) {
+      if (command == _colorCommand &&
+          // activeColor != null &&
+          activeColor.isNotEmpty) {
         processed = '$activeColor$processed';
+        processed = _frameText(processed, activeSyntax);
+      } else if (command != _colorCommand) {
+        processed = _frameText(processed, activeSyntax);
       }
-      processed = _frameText(processed, activeSyntax);
       return processed;
     }, ignoreEmpty: ignoreEmpty);
     return this;
@@ -462,6 +499,7 @@ class TextModifier<T extends Object> {
     dynamic commands, {
     bool ignoreEmpty = false,
   }) {
+    _log.fine('List of commands is applied to text: $commands');
     result = _process((text) {
       String applied = text;
       if (commands is List) {
@@ -486,24 +524,26 @@ class TextModifier<T extends Object> {
   static final String _defaultCommand = 'normal';
   static final String _colorCommand = 'color';
 
-  set command(String newCommand) => _fullCommand = getFullCommand(newCommand);
+  set command(String newCommand) =>
+      _fullCommand = getFullCommand(newCommand) ?? _defaultCommand;
 
   String? get command {
     final currentCommand = _fullCommand;
-    if (currentCommand == null) return null;
+    if (currentCommand == '') return null;
     if (currentCommand == _defaultCommand) return _defaultCommand;
     return currentCommand;
   }
 
   String? getFullCommand(String? cmd) {
     if (cmd == null || cmd == _defaultCommand) {
-      return cmd;
+      return null;
     }
 
     _warnMissingSyntax();
 
+    cmd = cmd.toLowerCase();
     for (final commandSyntax in mapSyntax!.entries) {
-      if (cmd == commandSyntax.key) return commandSyntax.key;
+      if (cmd == commandSyntax.key.toLowerCase()) return commandSyntax.key;
       final dynamic commandInfo = commandSyntax.value;
       if (commandInfo is Map && commandInfo.containsKey('caller')) {
         final dynamic caller = commandInfo['caller'];
@@ -512,7 +552,8 @@ class TextModifier<T extends Object> {
         }
       }
     }
-    throw ArgumentError('Invalid command "$cmd".');
+    _log.shout('Invalid command "$cmd".');
+    return null;
   }
 
   bool _isCommand(String? fullCommand) {
@@ -540,11 +581,11 @@ class TextModifier<T extends Object> {
     return [];
   }
 
-  String? get color => _colorVal;
+  String get color => _colorVal;
 
-  set color(String newColor) => _colorVal = _getColor(newColor);
+  set color(String newColor) => _colorVal = getColor(newColor) ?? '';
 
-  String? _getColor(String? col) {
+  String? getColor(String? col) {
     if (col == null) return null;
     if (_isColor(col)) return col;
     if (_isFavColor(col)) {
@@ -556,7 +597,8 @@ class TextModifier<T extends Object> {
       final colorVal = mapColor![col] as String;
       return colorVal;
     }
-    throw ArgumentError('Invalid color "$col".');
+    _log.shout('Invalid color "$col".');
+    return null;
   }
 
   bool _isColor(String col) {
@@ -588,7 +630,7 @@ const String _pleco = r'\u{EAAA}-\u{EFFF}';
 const String _extBF = r'\u{20000}-\u{2EBEF}';
 const String _extGH = r'\u{30000}-\u{3347F}';
 const String _extI = r'\u{2EBF0}-\u{2EE5F}';
-const String unassignedExtensions = r'\u{40000}-\u{10FFFF}';
+final String unassignedExtensions = r'\u{40000}-\u{10FFFF}';
 
 const String isChineseChar =
     '$_cjkRadSupl$_kangxiRad$_cjkStrokes$_cjkExtA$_cjkUniIdeogr$_extBF$_extI$_extGH';

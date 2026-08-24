@@ -118,10 +118,10 @@ class Character {
     for (final idKey in this.baseCategories) {
       final value = data[idKey];
       if (value == null) {
-        _log.shout('Value of baseCategory "$idKey" cannot be null.');
-        throw ArgumentError(
+        _log.shout(
           'Mandatory field missing: Each character entry requires a valid $idKey string.',
         );
+        throw Error();
       }
     }
 
@@ -138,7 +138,7 @@ class Character {
     List<String>? baseCategories,
     bool? strict,
   }) {
-    _log.finer('Create instance of Character with different entry.');
+    _log.finer('Create instance of Character.');
     if (!hasSyntax) {
       _log.finest('Instance is missing syntax maps.');
     }
@@ -197,10 +197,8 @@ class Character {
       // return other + this;
       return other.reconfigure(categories: comboCategories) + this;
     } else {
-      _log.warning('Addition Failed: Unsupported type ${other.runtimeType}');
-      throw UnsupportedError(
-        'Addition is not supported for type ${other.runtimeType}',
-      );
+      _log.shout('Addition Failed: Unsupported type ${other.runtimeType}');
+      throw Error();
     }
     return Dictionary(categories: comboCategories, characters: comboCharacters);
   }
@@ -210,7 +208,7 @@ class Character {
     // different from get which can return null instead of error
     if (!data.containsKey(category)) {
       _log.shout('Category "$category" does not exist.');
-      throw ArgumentError('Category "$category" does not exist.');
+      throw Error();
     }
     return data[category];
   }
@@ -442,8 +440,10 @@ class Character {
 
     if (!categories.containsKey(category) && strict) {
       value = null;
-      _log.severe('Ignore Set: Category "$category" does not exist.');
-      if (!force) throw ArgumentError('Category "$category" does not exist');
+      _log.shout(
+        'Cannot add value to Character. Category "$category" does not exist.',
+      );
+      if (!force) throw Error();
     } else {
       final Type targetType;
       if (value == null) {
@@ -465,10 +465,10 @@ class Character {
       }
 
       if (!sameTypes(value.runtimeType, targetType) && strict) {
-        _log.severe(
-          'Ignore Set: Type Mismatch for "$category". Expected $targetType, got ${value.runtimeType}.',
+        _log.shout(
+          'Cannot add value to Character. Type Mismatch for category "$category". Expected $targetType, got ${value.runtimeType}.',
         );
-        if (!force) throw TypeError();
+        if (!force) throw Error();
         return;
       }
 
@@ -499,17 +499,15 @@ class Character {
   void updateCategoryMap(String category, Map<String, dynamic>? updates) {
     _log.fine('Update Character category "$category" but only if its a map.');
     if (!categories.containsKey(category)) {
-      _log.shout(
-        'Cannot update because category does not exist in predefined categories.',
-      );
-      throw ArgumentError('Category "$category" does not exist.');
+      _log.shout('Cannot update because category "$category" does not exist.');
+      throw Error();
     }
     Type catType = categories[category] ?? Null;
     if (!isMapType(catType)) {
-      _log.shout('Value cannot be used if not Map, actual type: $catType');
-      throw ArgumentError(
-        'Category "$category" is registered as $catType, not a Map.',
+      _log.shout(
+        'Cannot update category "$category". Type of category is not Map: $catType',
       );
+      throw Error();
     }
     if (updates == null) {
       set(category, null);
@@ -593,14 +591,13 @@ class Character {
       return _modString.set(input);
     } else if (isListType(type) && input is List<String>) {
       return _modListStr.set(List<String>.from(input));
-    } else if (input is Map<String,String>) {
+    } else if (input is Map<String, String>) {
       return TextModifier(input);
     } else if (input != null) {
       return TextModifier(input as Object);
     } else {
-      throw ArgumentError(
-        'Cannot get TextModifier due to incorrect input type: $type.',
-      );
+      _log.shout('Cannot get TextModifier due to incorrect input type: $type.');
+      throw Error();
     }
   }
 
@@ -657,7 +654,7 @@ class ChCharacter extends Character with CopyEngine<ChCharacter> {
     List<String>? baseCategories,
     bool? strict,
   }) {
-    _log.finer('Create instance of Character with different entry.');
+    _log.finer('Create instance of ChCharacter.');
     if (baseCategories != null) {
       _log.finest('Cannot change baseCategories of ChCharacter.');
     }
@@ -778,9 +775,8 @@ class ChCharacter extends Character with CopyEngine<ChCharacter> {
     } else if (method == 'hash') {
       unique = "${plainPinyin}_$hashCodeFormatted";
     } else {
-      throw UnimplementedError(
-        'uniqueID has not been implemented for method $method".',
-      );
+      _log.shout('Character method uniqueID() has not been implemented for method $method".');
+      throw Error();
     }
 
     if (unique.startsWith('_')) unique = 'empty_char';
