@@ -1,9 +1,10 @@
-import 'package:lexicon/lexicon/dictionary.dart';
-import 'package:lexicon/lexicon/rule.dart';
-import 'package:lexicon/lexicon/character.dart';
-import 'package:lexicon/lexicon/sentence.dart';
+import 'package:lexicon/src/dictionary.dart';
+import 'package:lexicon/src/rule.dart';
+import 'package:lexicon/src/errors.dart';
+import 'package:lexicon/src/character.dart';
+import 'package:lexicon/src/sentence.dart';
 // import 'package:lexicon/lexicon/sentence.dart';
-import 'package:lexicon/lexicon/text_modifier.dart';
+import 'package:lexicon/src/text_modifier.dart';
 import 'package:test/test.dart';
 import 'package:logging/logging.dart';
 import 'package:collection/collection.dart';
@@ -13,10 +14,10 @@ void main() {
   /* –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
   group('Rule', () {
-    late Rule empty;
-    late Rule filled;
-    late Rule rule;
-    late TextModifier modText;
+    late ChRule empty;
+    late ChRule filled;
+    late ChRule rule;
+    late TextModifier<dynamic> modText;
 
     setUpAll(() {
       Logger.root.clearListeners();
@@ -30,13 +31,17 @@ void main() {
       final colors = getColors();
       final favColors = getFaves();
       modText = TextModifier('');
-      modText.addSyntax(mapSyntax: syntax, mapColor: colors, mapColorFav: favColors);
+      modText.addSyntax(
+        mapSyntax: syntax,
+        mapColor: colors,
+        mapColorFav: favColors,
+      );
     });
 
     setUp(() {
       Logger.root.level = Level.OFF;
-      empty = Rule();
-      rule = Rule(
+      empty = ChRule();
+      rule = ChRule(
         entry: {
           'title': ' ABER ich Mag Dich  ',
           'subtitle': ' a ',
@@ -54,7 +59,7 @@ void main() {
           ],
         },
       );
-      filled = Rule(
+      filled = ChRule(
         entry: {
           'level': '',
           'title': '',
@@ -71,6 +76,35 @@ void main() {
     });
 
     group('Rule attributes', () {
+      test('Rule', () {
+        final entry = {
+          'level': 'A1',
+          'title': 'Test',
+          'subtitle': '',
+          'sentences': [
+            {'text': ' 我去学校. ', 'pinyin': 'wo3'},
+            {'text': ''},
+          ],
+          'characters': [
+            {'simplified': '我', 'pinyin': 'wo3', 'test': 'a'},
+          ],
+        };
+        Rule r = Rule(
+          connection: Character(baseCategories: ['ID'], entry: {'ID': 'test'}),
+        );
+        r = Rule(
+          connection: Character(
+            baseCategories: ['simplified', 'traditional', 'pinyin'],
+          ),
+          entry: entry,
+        );
+        r = Rule(connection: ChCharacter(entry: {'simplified': '学'}));
+        r = ChRule(
+          connection: ChCharacter(entry: {'simplified': '学'}),
+          entry: entry,
+        );
+        expect(r.characters.runtimeType, ChDictionary);
+      });
       test('empty Rule', () {
         expect(filled.isEmpty, true);
         expect(empty.isEmpty, true);
@@ -78,10 +112,10 @@ void main() {
         expect(empty.title, '');
         expect(empty.tags.runtimeType, List<String>);
 
-        expect(empty.categories['characters'], Dictionary);
-        expect(empty.characters.runtimeType, Dictionary);
-        expect(empty.data['characters'].runtimeType, Dictionary);
-        expect(empty['characters'].runtimeType, Dictionary);
+        expect(empty.categories['characters'], ChDictionary);
+        expect(empty.characters.runtimeType, ChDictionary);
+        expect(empty.data['characters'].runtimeType, ChDictionary);
+        expect(empty['characters'].runtimeType, ChDictionary);
         expect(empty['characters'].name, 'ruleCharacters');
         expect(empty.characters.baseCategories, [
           'simplified',
@@ -100,15 +134,16 @@ void main() {
       });
 
       test('filled Rule', () {
+        expect(identical(rule.characters.rules[0], rule), true);
         expect(rule.isEmpty, false);
 
         expect(rule.sentences.length, 1);
         expect(rule.sentences[0].runtimeType, Sentence);
 
         expect(rule.characters.length, 2);
-        expect(rule.characters[0].runtimeType, Character);
+        expect(rule.characters[0].runtimeType, ChCharacter);
         expect(rule.charactersOpp.length, 1);
-        expect(rule.charactersOpp[0].runtimeType, Character);
+        expect(rule.charactersOpp[0].runtimeType, ChCharacter);
         expect(rule.charactersAll.length, 3);
 
         expect(rule.references.length != rule.characters.length, true);
@@ -120,20 +155,42 @@ void main() {
         expect(rule.uniqueID(method: 'hash'), '_1822514334');
 
         expect(rule.get('test'), null);
-        print(rule.toMarkdownTable());
+        // print(rule.toMarkdownTable());
+        expect(identical(rule.characters.rules[0], rule), true);
       });
     });
 
     group('changing attributes', () {
       test('link rule to rules in characters', () {
-        // empty.level = 'C1';
-        // empty.title = 'ABC';
+        empty['level'] = 'C1';
+        filled['title'] = 'ABC';
+        rule['title'] = 'TEST';
         expect(identical(empty.characters.rules[0], empty), true);
+        print([empty, empty.characters.rules[0]]);
+        expect(identical(filled.characters.rules[0], filled), true);
+        expect(identical(rule.characters.rules[0], rule), true);
+        expect(
+          identityHashCode(rule.characters.rules.first),
+          identityHashCode(rule),
+        );
+
+        final copyCharacters = empty.characters.copy();
+        expect(
+          identityHashCode(empty.characters.rules.first),
+          identityHashCode(empty),
+        );
+
+        expect(
+          identityHashCode(copyCharacters.rules.first),
+          identityHashCode(empty),
+        );
       });
       test('editiong attributes directly will affect internal data', () {
         empty.tags.add('x');
         expect(empty.tags, ['x']);
-        expect(empty.isEmpty, false);
+        Logger.root.level = Level.ALL;
+        expect(empty.isEmpty, true);
+        Logger.root.level = Level.OFF;
         empty.set('tags', null);
         expect(empty.tags.isEmpty, true);
         expect(empty.isEmpty, true);
@@ -157,12 +214,12 @@ void main() {
         expect(rule.characters.length, 2);
         rule.data['characters'] += ChCharacter(entry: {'traditional': 'b'});
         expect(rule.characters.length, 3);
-        rule.data['characters'] += Dictionary(characters: [rule]);
+        rule.data['characters'] += Dictionary('D', characters: [rule]);
         expect(rule.characters.length, 3);
       });
 
       test('cannot create a dictionary by addition', () {
-        expect(() => rule + filled, throwsA(isA<Error>()));
+        expect(() => rule + filled, throwsA(isA<LexiconException>()));
       });
     });
 
@@ -193,16 +250,16 @@ void main() {
         );
       });
       test('does not change type', () {
-        expect(filled.copy().runtimeType, Rule);
+        expect(filled.copy().runtimeType, ChRule);
         expect(
           filled.copyWith({
             'tags': ['t'],
           }).runtimeType,
-          Rule,
+          ChRule,
         );
-        expect(filled.reconfigure(baseCategories: ['id']).runtimeType, Rule);
-        expect(filled.restrict().runtimeType, Rule);
-        expect(filled.relax().runtimeType, Rule);
+        expect(filled.reconfigure(baseCategories: ['id']).runtimeType, ChRule);
+        expect(filled.restrict().runtimeType, ChRule);
+        expect(filled.relax().runtimeType, ChRule);
       });
     });
 
@@ -210,7 +267,7 @@ void main() {
       expect(filled.applySyntaxToCharacters().length, 0);
       expect(
         () => rule.applySyntaxToCharacters(),
-        throwsA(isA<Error>()),
+        throwsA(isA<LexiconException>()),
       );
       rule.addSyntax(getSyntax(), getColors(), mapColorFav: getFaves());
       final syntaxed = rule.applySyntaxToCharacters();

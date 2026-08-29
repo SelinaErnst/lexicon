@@ -1,28 +1,59 @@
-import 'package:lexicon/lexicon/dictionary.dart';
-import 'package:lexicon/lexicon/utils.dart';
+import 'package:lexicon/lexicon.dart';
 import 'dart:io';
 
 void main() async {
+  /* ––––––––––––––––––––––– create dictionary –––––––––––––––––––––– */
+  Dictionary dictionary = Dictionary(
+    'Lexicon',
+    baseCategories: ['word'],
+    categories: {'translation': 'list'},
+    characters: [
+      {
+        'word': 'test',
+        'translation': ['Test'],
+      },
+      {
+        'word': 'best',
+        'translation': ['am besten', 'best', 'der/die/das Beste'],
+      },
+      {'word': 'dictionary', 'translation': 'Wörterbuch'},
+    ],
+    rules: [
+      {'level': 'A1', 'title': 'Test WO', 'subtitle': 'rule about word order'},
+      {
+        'level': 'A1',
+        'title': 'Test Verbs',
+        'subtitle': 'rule about verb conjugation',
+      },
+    ],
+  );
+  /* ––––––––––––––––––––––– create dictionary –––––––––––––––––––––– */
+
+  print(dictionary);
+  print(dictionary.categories);
+  print(dictionary.characters.toMarkdownTable());
+  print(dictionary.rules.toMarkdownTable());
+
   /* ––––––––––––––––––––––––– config files ––––––––––––––––––––––––– */
-  final synatxMap = readJSONSync<Map<String, dynamic>>(
-    File('assets/syntax.json'),
-  );
-  final colorMap = readJSONSync<Map<String, dynamic>>(
-    File('assets/colors.json'),
-  );
-  final catMap = readJSONSync<Map<String, dynamic>>(
-    File('assets/categories.json'),
-  );
+  final categories = File('assets/categories.json');
+  final dictFile = File('assets/MCD.jsonl');
+  final ruleFile = File('assets/grammar.jsonl');
   /* ––––––––––––––––––––––––– config files ––––––––––––––––––––––––– */
 
-  /* –––––––––––––––––––––––– dictionary init ––––––––––––––––––––––– */
-  ChDictionary dictionary = ChDictionary();
-  dictionary.addSyntax(synatxMap, colorMap);
-  dictionary.read(File('assets/MCD.jsonl'), categories: catMap);
-  /* –––––––––––––––––––––––– dictionary init ––––––––––––––––––––––– */
+  /* ––––––––––––––––––––– read dictionary file ––––––––––––––––––––– */
+  ChDictionary chDictionary = ChDictionary('MCD');
+  await chDictionary.readCategories(categories);
+  await chDictionary.read(dictFile);
+  await chDictionary.readRules(ruleFile);
+  /* ––––––––––––––––––––– read dictionary file ––––––––––––––––––––– */
 
-  print(dictionary.getSlice(stop: 10));
-  final char = dictionary.search(pattern: 'ri4')[0];
+  print(chDictionary);
+  print(chDictionary.getSlice(stop: 10).characters.toMarkdownTable());
+  final char = chDictionary.search(pattern: 'ri').first;
   print(char);
+  print(
+    'Pinyin: ${char.toneMarkedPinyin}'
+    '\nNumeric Pinyin: ${char.numericPinyin}'
+  );
   print(char.toMarkdownTable());
 }

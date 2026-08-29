@@ -1,8 +1,9 @@
-import 'package:lexicon/lexicon/sentence.dart';
-import 'package:lexicon/lexicon/text_modifier.dart';
-import 'package:lexicon/lexicon/utils.dart';
+import 'package:lexicon/src/sentence.dart';
+import 'package:lexicon/src/text_modifier.dart';
+import 'package:lexicon/src/utils.dart';
 import 'package:test/test.dart';
 import 'dart:io';
+import 'package:logging/logging.dart';
 
 // void main() {
 //   runSentence();
@@ -14,6 +15,13 @@ void main() {
     late Sentence empty;
     late TextModifier<String> mod;
     setUpAll(() {
+      Logger.root.clearListeners();
+      Logger.root.onRecord.listen((record) {
+        print(
+          '[${record.level.name}] (${record.loggerName}): ${record.message}',
+        );
+      });
+
       final String pathSyntax = 'assets/syntax.json';
       final String pathColors = 'assets/colors.json';
       Map<String, dynamic> colors = readJSONSync(File(pathColors));
@@ -25,7 +33,11 @@ void main() {
         "grey": "Light Slate Gray",
       };
       mod = TextModifier('');
-      mod.addSyntax(mapSyntax: syntax, mapColor: colors, mapColorFav: favColors);
+      mod.addSyntax(
+        mapSyntax: syntax,
+        mapColor: colors,
+        mapColorFav: favColors,
+      );
     });
 
     setUp(() {

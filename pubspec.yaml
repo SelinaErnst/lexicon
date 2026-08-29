@@ -1,6 +1,9 @@
 name: lexicon
 description: "A pure Dart package for background character dictionaries and grammar rules."
 version: 0.0.1
+homepage: https://github.com/SelinaErnst/lexicon
+repository: https://github.com/SelinaErnst/lexicon
+issue_tracker: https://github.com/SelinaErnst/lexicon/issues
 
 environment:
   sdk: ^3.12.2

@@ -15,5 +15,6 @@
         "pleco",
         "unicode"
     ],
-    "editor.formatOnSaveMode": "modificationsIfAvailable"
+    "editor.formatOnSaveMode": "modificationsIfAvailable",
+    "chat.disableAIFeatures": true
 }

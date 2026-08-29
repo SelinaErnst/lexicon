@@ -1,6 +1,7 @@
-import 'package:lexicon/lexicon/dictionary.dart';
-import 'package:lexicon/lexicon/template_renderer.dart';
-import 'package:lexicon/lexicon/text_modifier.dart';
+import 'package:lexicon/src/dictionary.dart';
+import 'package:lexicon/src/errors.dart';
+import 'package:lexicon/src/template_renderer.dart';
+import 'package:lexicon/src/text_modifier.dart';
 import 'package:test/test.dart';
 import "package:logging/logging.dart";
 import "dart:io";
@@ -75,7 +76,7 @@ void main() async {
 
       expect(
         () => ContentController(cont, TextModifier('')),
-        throwsA(isA<Error>()),
+        throwsA(isA<LexiconException>()),
       );
     });
 
@@ -127,11 +128,11 @@ void main() async {
           '/home/selina/Applications/MyApps/suhan/packages/lexicon/assets/pleco.chd';
 
       final Writer w = Writer(mod, tmplFile: File(path));
-      expect(w.compile(dict[1]).result.isNotEmpty,true);
-      expect(w.compile(dict[2]).result.isNotEmpty,true);
-      expect(w.compile(dict[3]).result.isNotEmpty,true);
-      expect(w.character==dict[3],true);
-      expect(w.text!=w.result,true);
+      expect(w.compile(dict[1]).result.isNotEmpty, true);
+      expect(w.compile(dict[2]).result.isNotEmpty, true);
+      expect(w.compile(dict[3]).result.isNotEmpty, true);
+      expect(w.character == dict[3], true);
+      expect(w.text != w.result, true);
     });
   });
 }

@@ -1,9 +1,8 @@
-import 'package:lexicon/lexicon/dictionary.dart';
-import 'package:lexicon/lexicon/utils.dart';
+import 'package:lexicon/lexicon.dart';
+import 'package:lexicon/src/utils.dart';
 import 'package:test/test.dart';
 import 'dart:io';
 import 'package:logging/logging.dart';
-
 import 'helper.dart';
 
 void main() async {
@@ -23,7 +22,7 @@ void main() async {
     final catMap = readJSONSync<Map<String, dynamic>>(
       File('assets/categories.json'),
     );
-    Dictionary dictionary = ChDictionary();
+    Dictionary dictionary = ChDictionary('MCD');
     dictionary.addSyntax(synatxMap, colorMap);
     await dictionary.read(File('assets/MCD.jsonl'), categories: catMap);
     expect(dictionary.isNotEmpty, true);
@@ -31,6 +30,6 @@ void main() async {
 
   test('test', () async {
     var d = await getExample();
-    expect(d.isNotEmpty,true);
+    expect(d.isNotEmpty, true);
   });
 }

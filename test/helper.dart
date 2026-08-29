@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'package:lexicon/lexicon/dictionary.dart';
-import 'package:lexicon/lexicon/utils.dart';
+import 'package:lexicon/lexicon.dart';
+import 'package:lexicon/src/utils.dart';
 
 Map<String, dynamic> getSyntax() {
   return readJSONSync(File('assets/syntax.json'));
@@ -29,7 +29,7 @@ Future<Dictionary> getExample() async {
   final colors = getColors();
   final faves = getFaves();
   final categories = getCategories();
-  Dictionary dictionary = ChDictionary();
+  Dictionary dictionary = ChDictionary('MCD');
   dictionary.addSyntax(syntax, colors, mapColorFav: faves);
   await dictionary.read(File('assets/MCD.jsonl'), categories: categories);
   return dictionary;

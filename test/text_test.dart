@@ -1,7 +1,9 @@
-import 'package:lexicon/lexicon/text_modifier.dart';
-import 'package:lexicon/lexicon/utils.dart';
+import 'package:lexicon/src/errors.dart';
+import 'package:lexicon/src/text_modifier.dart';
+import 'package:lexicon/src/utils.dart';
 import 'package:test/test.dart';
 import 'dart:io';
+import 'package:logging/logging.dart';
 
 void main() {
   final List<String> listText = ['ǜ asksnc', '，', '八 八', '八八'];
@@ -13,7 +15,7 @@ void main() {
   late Map<String, dynamic> colors;
   late Map<String, dynamic> syntax;
 
-  late TextModifier mod;
+  late TextModifier<dynamic> mod;
   late TextModifier<String> modStr;
   late TextModifier<List<String>> modList;
   late TextModifier<String> modAct;
@@ -26,6 +28,13 @@ void main() {
   };
 
   setUpAll(() {
+    Logger.root.clearListeners();
+    Logger.root.onRecord.listen((record) {
+      print('[${record.level.name}] (${record.loggerName}): ${record.message}');
+    });
+
+    Logger.root.level = Level.OFF;
+
     colors = readJSONSync(File(pathColors));
     syntax = readJSONSync(File(pathSyntax));
     mod = TextModifier('');
@@ -40,10 +49,47 @@ void main() {
   });
 
   group('TextModifier', () {
+    test('input types', () {
+      dynamic mapInput;
+      TextModifier<dynamic> modifier;
+      modifier = TextModifier<Null>(null);
+      expect(modifier.strip(' ').result, null);
+
+      mapInput = {'a': 'a_'};
+      modifier = TextModifier<dynamic>(mapInput);
+      modifier.strip('_');
+
+      expect(modifier.result is Map<String, String>, true);
+      expect(modifier.result != modifier.input, true);
+
+      modifier = TextModifier<Map<String, dynamic>>(
+        mapInput as Map<String, dynamic>,
+      );
+      modifier.strip('_');
+      expect(modifier.result is Map<String, dynamic>, true);
+      expect(modifier.result != modifier.input, true);
+
+      mapInput = <String, dynamic>{'a': 'a_'};
+      modifier = TextModifier(mapInput);
+      modifier.strip('_');
+      expect(modifier.result is Map<String, dynamic>, true);
+      expect(modifier.result != modifier.input, true);
+
+      modifier.set([1, 'input_']);
+      modifier.strip('_');
+      expect(modifier.result is List<dynamic>, true);
+      expect(modifier.result != modifier.input, true);
+
+      modifier.set('input_');
+      modifier.strip('_');
+      expect(modifier.result is String, true);
+      expect(modifier.result != modifier.input, true);
+    });
+
     group('convert text', () {
       test('input type has to be the same', () {
-        expect(() => modList.set(''), throwsA(isA<Error>()));
-        expect(() => modStr.set(['']), throwsA(isA<Error>()));
+        expect(() => modList.set(''), throwsA(isA<LexiconException>()));
+        expect(() => modStr.set(['']), throwsA(isA<LexiconException>()));
 
         expect(mod.set('_ a_a.').toCleanLink().result, 'a＿a');
         expect(mod.set('_ a_a.').toCleanRef().result, '＿a＿a.');
@@ -93,9 +139,12 @@ void main() {
         modStr.set('abc [ [list Text] a] abc');
         modList.set(['[a1a2]', 'ba4', '[chi1]']);
 
+        // Logger.root.level = Level.ALL;
+        // print(modStr.applySyntaxCommands(['tab']).result);
+        // Logger.root.level = Level.OFF;
         expect(
           () => modStr.applySyntaxCommands(['tab']),
-          throwsA(isA<Error>()),
+          throwsA(isA<LexiconException>()),
         );
 
         expect(modStr.hasSyntax, false);
@@ -106,7 +155,10 @@ void main() {
           modStr.applySyntaxCommands(['tab']).result,
           'abc [ [list Text] a] abc',
         );
-        expect(modStr.linkPinyin().result, 'abc [ [list Text] a] abc');
+        expect(
+          modStr.linkPronunciation().result,
+          'abc [ [list Text] a] abc',
+        );
         expect(
           modStr.set('abc [ [a1a3]]').convertPinyin().result,
           'abc [ [āǎ]]',
@@ -192,31 +244,35 @@ void main() {
           '[chi1]',
         ]);
         modList.set(['[a1a2]', 'ba4', '[chi1]']);
-        expect(modList.linkPinyin().result, ['[a1a2]', 'ba4', '[chi1]']);
+        expect(modList.linkPronunciation().result, [
+          '[a1a2]',
+          'ba4',
+          '[chi1]',
+        ]);
 
-        print(
-          modAct.set('2', color: '').applySyntaxCommands([
-            'normal',
-            'normal',
-            'color',
-          ]).result,
-        );
+        // print(
+        //   modAct.set('2', color: '').applySyntaxCommands([
+        //     'normal',
+        //     'normal',
+        //     'color',
+        //   ]).result,
+        // );
       });
 
       test('apply normal', () {
         modAct.color = 'grey';
         // modAct.color = '';
-        print(
-          modAct.set('2').applySyntaxCommands([
-            'normal',
-            'normal',
-            'color',
-          ]).result,
-        );
+        // print(
+        //   modAct.set('2').applySyntaxCommands([
+        //     'normal',
+        //     'normal',
+        //     'color',
+        //   ]).result,
+        // );
 
-        final s =
-            '#C1  #NB1 ENG  #NB2  #C2 ◼ eight ◼ 8 #NL  #C1  #NB1 GER  #NB2  #C2 ◼ acht #NL  #C1  #NB1 RAD  #NB2  #C2 ◼ KangXi 12: eight #NL';
-        print(s.strip('#NL'));
+        // final s =
+        //     '#C1  #NB1 ENG  #NB2  #C2 ◼ eight ◼ 8 #NL  #C1  #NB1 GER  #NB2  #C2 ◼ acht #NL  #C1  #NB1 RAD  #NB2  #C2 ◼ KangXi 12: eight #NL';
+        // print(s.strip('#NL'));
       });
     });
   });

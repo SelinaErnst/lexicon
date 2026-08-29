@@ -11,95 +11,197 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/to/develop-packages).
 -->
 
-## Features
+# Lexicon
 
-- create dictionary objects that contain character objects
-- each character contains specific information (categories)
-- dictionary alos contains grammar rules
-- dictionary can read .jsonl, .db files that contain the information
-- dictionary can be converted into text file that can be used as input for the Pleco Dictionary App
+Lexicon is a Dart package for working with structured language and dictionary data.
 
-## Getting started
+The package is centered around **`Character`** and **`Dictionary`**, providing structures and utilities for representing, organizing, and processing language-related information.
 
-try this
+It also provides text-processing functionality, with a particular focus on **Chinese language data, Pinyin, and preparing data for Pleco**.
 
+## Main Features
+
+* **Character data** — represent and work with individual language entries and their associated information.
+* **Dictionary data** — organize and manage collections of characters.
+* **Text processing** — modify and normalize strings, lists, and maps containing text.
+* **Pinyin processing** — convert between plain, numeric, and tone-marked Pinyin.
+* **Pleco-compatible formatting** — apply the formatting required for Pleco-compatible output.
+
+## Character and Dictionary
+
+`Character` and `Dictionary` are the central components of Lexicon. They can be configured for specific languages and their respective data structures. For example, `ChCharacter` and `ChDictionary` provide the corresponding implementations for Chinese language data.
+
+### Character
+
+A `Character` represents an individual language entry together with its associated structured data. Its `categories` define what kinds of information the character can contain and can specify the expected type and structure of that information. Categories therefore provide the framework that gives the data within a character its meaning and structure. Its `baseCategories` define the categories that are fundamental to that character.They contain `String` values and provide the basis for identifying and comparing characters. They therefore determine which aspects of a character are considered when deciding whether two entries represent the same character.
+
+### Dictionary
+
+A `Dictionary` is a collection of `Character` objects that provides functionality for adding, removing, searching, comparing, sorting, and selecting characters. Its `categories` define the available data categories and their expected types, while `baseCategories` specify which categories are fundamental for identifying and comparing characters. These configurations are also used when adding character data to the dictionary, ensuring that characters within it follow a consistent structure. A `Dictionary` can also contain `Rule` objects, which are managed separately from its characters.
+
+## TextModifier
+
+`TextModifier` provides the text-processing functionality used throughout Lexicon. It can transform strings as well as strings contained in lists and maps, allowing language data to be cleaned, normalized, searched, and modified without having to handle each collection type separately. It also provides operations for Pinyin conversion, such as converting between tone-marked and numeric Pinyin.
+
+``` text
+input
+  │
+  ▼
+modifier
+  │
+  ├── transformation 1
+  │
+  ├── transformation 2
+  │
+  └── transformation 3
+  │
+  ▼
+result
 ```
-dart run examples\main.dart
-```
 
-## Usage
+When language data needs to be prepared for use with Pleco, `TextModifier` provides the formatting definitions required for Pleco-compatible output. These definitions map formatting commands to the Pleco codes used to apply formatting such as colors, bold text, or other supported styles. 
+The formatting definitions are taken from `assets/syntax.json`, while the color definitions are taken from `assets/colors.json`.
 
 
-Read dictionary files:
+## Getting Started
+
+Import Lexicon into your Dart project:
 
 ```dart
-<!-- ––––––––––––––––––––––– config files –––––––––––––––––––––––– -->
-final synatxMap = readJSONSync(File('assets/syntax.json'))!;
-final colorMap = readJSONSync(File('assets/colors.json'))!;
-final catMap = readJSONSync(File('assets/categories.json'))!;
-<!-- ––––––––––––––––––––––– config files –––––––––––––––––––––––– -->
+import 'package:lexicon/lexicon.dart';
+```
 
-<!-- –––––––––––––––––––––– dictionary init –––––––––––––––––––––– -->
-ChDictionary dictionary = ChDictionary();
-dictionary.addSyntax(synatxMap, colorMap);
-dictionary.read(File('assets/MCD.jsonl'), catMap);
-<!-- –––––––––––––––––––––– dictionary init –––––––––––––––––––––– -->
+The main functionality is provided by `Character` and `Dictionary`, while utilities such as `TextModifier` can be used to process and prepare the associated language data.
 
-dictionary.getSlice(stop: 10);
+
+Conceptually:
+
+``` dart
+final result = TextModifier<String>('Nǐ hǎo')
+    .toNumericPinyin() // 'Ni3 hao3'
+    .toPlainPinyin() // 'Ni hao'
+    .result;
+
+final result = TextModifier<String>({'pinyin':'Nǐ hǎo'})
+    .toNumericPinyin() // {'pinyin':'Ni3 hao3'} 
+    .toPlainPinyin() // {'pinyin':'Ni hao'} 
+    .result;
 ```
+****
+# Usage
+
+See: `example/main.dart`
+
+#### Create Dictionary
+
+```dart
+/* ––––––––––––––––––––––– create dictionary –––––––––––––––––––––– */
+Dictionary dictionary = Dictionary(
+  'Lexicon',
+  baseCategories: ['word'],
+  categories: {'translation': 'list'},
+  characters: [
+    {'word': 'test', 'translation': ['Test']},
+    {'word': 'best', 'translation': ['am besten','best','der/die/das Beste']},
+    {'word': 'dictionary', 'translation': 'Wörterbuch'},
+  ],
+  rules: [
+    {'level': 'A1', 'title': 'Test', 'subtitle': 'rule about word order'},
+    {
+      'level': 'A1',
+      'title': 'Test',
+      'subtitle': 'rule about verb conjugation',
+    },
+  ],
+);
+/* ––––––––––––––––––––––– create dictionary –––––––––––––––––––––– */
+print(dictionary);
+print(dictionary.categories);
 ```
-Dict <>: 10 (depth)
-   0: 〔 八 |  | ba1 〕
-   1: 〔 勹 |  | bao1 〕
-   2: 〔 贝 | 貝 | bei4 〕
-   3: 〔 冫 |  | bing1 〕
-   4: 〔 不 |  | bu4 〕
-   5: 〔 艸 |  | cao3 〕
-   6: 〔 屮 |  | che4 〕
-   7: 〔 虫 | 蟲 | chong2 〕
-   8: 〔 寸 |  | cun4 〕
-   9: 〔 大 |  | da4 〕
+```text
+Dictionary<Character, Rule> "Lexicon": 3 (depth)
+  baseCategories: [word]
+  categories: 2
+  characters: 3
+  rules: 1
+
+{word: String, translation: List<String>}
 ```
+
+```dart
+print(dictionary.characters.toMarkdownTable());
+```
+| # | Character |
+|---:|:---|
+| 0 | 〔 test 〕 |
+| 1 | 〔 best 〕 |
+| 2 | 〔 dictionary 〕 |
+
+```dart
+print(dictionary.rules.toMarkdownTable());
+```
+| # | Rule |
+|---:|:---|
+| 0 | « Level A1: Test WO » |
+| 1 | « Level A1: Test Verbs » |
+
+#### Read Dictionary
+
+```dart
+  /* ––––––––––––––––––––––––– config files ––––––––––––––––––––––––– */
+  final categories = File('assets/categories.json');
+  final dictFile = File('assets/MCD.jsonl');
+  final ruleFile = File('assets/grammar.jsonl');
+  /* ––––––––––––––––––––––––– config files ––––––––––––––––––––––––– */
+
+  /* ––––––––––––––––––––– read dictionary file ––––––––––––––––––––– */
+  ChDictionary chDictionary = ChDictionary('MCD');
+  await chDictionary.readCategories(categories);
+  await chDictionary.read(dictFile);
+  await chDictionary.readRules(ruleFile);
+  /* ––––––––––––––––––––– read dictionary file ––––––––––––––––––––– */
+
+print(chDictionary);
+```
+```text
+ChDictionary "MCD": 73 (depth)
+  baseCategories: [simplified, traditional, pinyin]
+  categories: 25
+  characters: 73
+  rules: 28
+```
+```dart
+
+print(chDictionary.getSlice(stop: 10).characters.toMarkdownTable());
+```
+| # | ChCharacter |
+|---:|:---|
+| 0 | 〔 八 \|  \| ba1 〕 |
+| 1 | 〔 勹 \|  \| bao1 〕 |
+| 2 | 〔 贝 \| 貝 \| bei4 〕 |
+| 3 | 〔 冫 \|  \| bing1 〕 |
+| 4 | 〔 不 \|  \| bu4 〕 |
+| 5 | 〔 艸 \|  \| cao3 〕 |
+| 6 | 〔 屮 \|  \| che4 〕 |
+| 7 | 〔 虫 \| 蟲 \| chong2 〕 |
+| 8 | 〔 寸 \|  \| cun4 〕 |
+| 9 | 〔 大 \|  \| da4 〕 |
+
 Examine character in dictionary:
 
+```dart
+final char = chDictionary.search(pattern: 'ri').first;
+print(char);
+print(
+  'Pinyin: ${char.toneMarkedPinyin}'
+  '\nNumeric Pinyin: ${char.numericPinyin}'
+);
+print(char.toMarkdownTable());
 ```
-dictionary.search(pattern: 'ri4')[0];
-```
-
-```
-|SIMPLIFIED            | 日
-|TRADITIONAL           | 
-|PINYIN                | ri4
-|GERMAN                | - Sonne
-|                      | - Tag
-|                      | - Japan
-|RADICAL               | - KangXi 72: sun
-|OPPOSITE              | - 夜 [yè]
-|CONFUSABLES           | - 曰 [yuē]
-|                      | - 白 [bái]
-|                      | - 臼 [jiù]
-|GRAMMAR               | - ＿年＿月＿日
-|STROKES               | 񃘽 񃘾 񃘿 񃙀
-|STROKES_COUNT         | 4
-|MNEMONICS             | - The sun tells what time of day it is. Japan is the land of the rising sun.
-|USAGE                 | - heat
-|                      | - light
-|                      | - (period of) time
-|ORIGIN                | 日 depicts the sun. The character was originally a circle, but because it's not easy to inscribe on oracle bones, the character may have been changed to a square shape. The dot in 日 is to avoid confusion with 囗.
-|ANCIENT               | - 񃘻
-|RELATIVES             | - 明 [míng]
-|                      | - 的 [de]
-|                      | - 时 [shí]
-|WORDS                 | - 生日 [shēngri]
-|LINKS                 | - https://zi.tools/zi/日
-|IMAGES                | - shuowen_jiezi: /media/selina/SHARE/MyProjects/ChD/.images/ri4_U65E5_U65E5/ri4_U65E5_U65E5_shuowen_jiezi.png
-|                      | - ancient_character: /media/selina/SHARE/MyProjects/ChD/.images/ri4_U65E5_U65E5/ri4_U65E5_U65E5_ancient_character.png
-|URLS                  | - 
-|                      | - https://img.zdic.net/zy/jiaguwen/42_ED55.svg
-|                      | - https://ziphoenicia-1300189285.cos.ap-shanghai.myqcloud.com/swjz/4767.svg
-```
-```
-char.toMarkdownTable();
+```text
+〔 日 |  | ri4 〕
+Pinyin: rì
+Numeric Pinyin: ri4
 ```
 
 |  Category | Value  |
@@ -122,9 +224,13 @@ char.toMarkdownTable();
 | **RELATIVES** | • &nbsp;明 [míng]<br>• &nbsp;的 [de]<br>• &nbsp;时 [shí] |
 | **WORDS** | • &nbsp;生日 [shēngri] |
 | **LINKS** | • &nbsp;https://zi.tools/zi/日 |
-| **URLS** | • &nbsp;<br>• &nbsp;https://img.zdic.net/zy/jiaguwen/42_ED55.svg<br>• &nbsp;https://ziphoenicia-1300189285.cos.ap-shanghai.myqcloud.com/swjz/4767.svg |
+| **URLS** | • &nbsp;https://img.zdic.net/zy/jiaguwen/42_ED55.svg<br>• &nbsp;https://ziphoenicia-1300189285.cos.ap-shanghai.myqcloud.com/swjz/4767.svg |
 
 ## Additional information
 
 This is an attempt of recreating an existing [app](https://github.com/SelinaErnst/ChineseDictionary) that was written in Python.   
-The package is supposed to help in the background when editing the characters.
+Lexicon was developed as a supporting library for applications that create and edit structured language data.
+
+## License
+
+See the `LICENSE` file for licensing information.
