@@ -49,7 +49,7 @@ extension LexiconListExtension on List<Character> {
     final rows = List.generate(
       length,
       (index) =>
-      // ignore: unnecessary_string_escapes
+          // ignore: unnecessary_string_escapes
           '| $index | ${this[index].toString().replaceAll(r'|', '\\\|')} |',
     );
 

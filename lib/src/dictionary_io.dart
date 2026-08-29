@@ -40,12 +40,9 @@ String? getExt(
   return matchEntry?.key;
 }
 
-
 /// File import output
 extension DictionaryIO<C extends Character, R extends Rule>
     on Dictionary<C, R> {
-
-
   /* ================================================================ */
   /*                               READ                               */
   /* ================================================================ */
@@ -338,6 +335,4 @@ extension DictionaryIO<C extends Character, R extends Rule>
     _log.fine('Write to .db file.');
     throw UnimplementedFeatureException('_toDB');
   }
-
-
 }

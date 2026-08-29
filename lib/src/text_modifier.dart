@@ -581,7 +581,6 @@ class TextModifier<T> {
     return this;
   }
 
-
   /// Links Pronunciation frames to their configured syntax representation.
   TextModifier<T> linkPronunciation({bool ignoreEmpty = false}) {
     _warnMissingSyntax();
@@ -593,7 +592,6 @@ class TextModifier<T> {
       return '[$linked]';
     }, ignoreEmpty: ignoreEmpty);
   }
-
 
   /// Frames [text] using the supplied syntax elements.
   String _frameText(String text, List<String> syntax) {
@@ -777,40 +775,56 @@ class TextModifier<T> {
 
 /// Unicode range for CJK Radicals Supplement.
 const String _cjkRadSupl = r'\u2E80-\u2EFF';
+
 /// Unicode range for Kangxi Radicals.
 const String _kangxiRad = r'\u2F00-\u2FDF';
+
 /// Unicode range for CJK Strokes.
 const String _cjkStrokes = r'\u31C0-\u31EF';
+
 /// Unicode range for CJK Unified Ideographs Extension A.
 const String _cjkExtA = r'\u3400-\u4DBF';
+
 /// Unicode range for CJK Unified Ideographs.
 const String _cjkUniIdeogr = r'\u4E00-\u9FFF';
+
 /// Unicode range used for Pleco syntax characters.
 const String _pleco = r'\u{EAAA}-\u{EFFF}';
 
 /// Unicode range for CJK Unified Ideographs Extensions B–F.
 const String _extBF = r'\u{20000}-\u{2EBEF}';
+
 /// Unicode range for CJK Unified Ideographs Extensions G–H.
 const String _extGH = r'\u{30000}-\u{3347F}';
+
 /// Unicode range for CJK Unified Ideographs Extension I.
 const String _extI = r'\u{2EBF0}-\u{2EE5F}';
+
 /// Unicode range covering unassigned extensions.
 final String unassignedExtensions = r'\u{40000}-\u{10FFFF}';
+
 /// Combined Unicode ranges used to identify Chinese characters.
 const String isChineseChar =
     '$_cjkRadSupl$_kangxiRad$_cjkStrokes$_cjkExtA$_cjkUniIdeogr$_extBF$_extI$_extGH';
+
 /// Regular expression for supported Pleco syntax patterns.
 final _plecoPatterns = "(${['1A0A', 'A0P', '1A0P', 'AA10', 'AA00'].join('|')})";
+
 /// Matches Pleco syntax characters and supported Pleco patterns.
 final RegExp rPleco = RegExp('[$_pleco]|$_plecoPatterns', unicode: true);
+
 /// Matches one or more numeric digits.
 final RegExp rDigit = RegExp(r'\d+');
+
 /// Matches supported Chinese and English punctuation marks.
 final RegExp rPunctuation = RegExp(r'[.,?!。，！？]');
+
 /// Matches Pinyin vowels, including `ü`.
 final RegExp rVowel = RegExp(r'[aoeiuvü]+');
+
 /// Matches text enclosed in backslash-delimited frames.
 final RegExp rFrame = RegExp(r'\[([^\]\[]+)\]');
+
 /// Matches supported bullet characters.
 final RegExp rBullet = RegExp(r'[■□●○]');
 
@@ -822,6 +836,7 @@ const List<List<String>> _pinyinToneMark = [
   ['ǎ', 'ǒ', 'ě', 'ǐ', 'ǔ', 'ǚ', 'ǚ'], // Tone 3
   ['à', 'ò', 'è', 'ì', 'ù', 'ǜ', 'ǜ'], // Tone 4
 ];
+
 /// Maps tone-marked Pinyin characters to their base vowel and tone number.
 const Map<String, List<String>> _toneMap = {
   'ā': ['a', '1'], 'á': ['a', '2'], 'ǎ': ['a', '3'], 'à': ['a', '4'], // a
@@ -832,6 +847,7 @@ const Map<String, List<String>> _toneMap = {
   'ǖ': ['v', '1'], 'ǘ': ['v', '2'], 'ǚ': ['v', '3'], 'ǜ': ['v', '4'], // ü
   'ü': ['v', ''],
 };
+
 /// Maps punctuation between English/German-style and Chinese-style forms.
 const Map<String, String> _punctuationMap = {
   // Sentence Endings

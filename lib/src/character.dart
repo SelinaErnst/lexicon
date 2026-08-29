@@ -1,4 +1,3 @@
-
 import 'package:lexicon/src/errors.dart';
 import 'package:logging/logging.dart';
 import 'package:collection/collection.dart';
@@ -43,7 +42,10 @@ mixin CopyEngine<T extends Character> on Character {
 
   @override
   T reconfigure({Map<String, Type>? categories, List<String>? baseCategories}) {
-    return createInstance(categories: categories, baseCategories: baseCategories);
+    return createInstance(
+      categories: categories,
+      baseCategories: baseCategories,
+    );
   }
 
   @override
@@ -271,7 +273,10 @@ class Character {
     List<String>? baseCategories,
   }) {
     _log.finest('Copy Character ${toString()} with different configuration.');
-    return createInstance(categories: categories, baseCategories: baseCategories);
+    return createInstance(
+      categories: categories,
+      baseCategories: baseCategories,
+    );
   }
 
   /// Creates a copy of this character with updated category values.

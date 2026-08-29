@@ -197,15 +197,12 @@ class MissingArgumentException extends LexiconException {
   final Type? expected;
 
   /// Creates an exception for a missing argument.
-  MissingArgumentException(
-    this.parameter, {
-    this.function = '',
-    this.expected,
-  }) : super(
-         'Missing required argument "$parameter"'
-         '${function.isEmpty ? '' : ' for $function'}'
-         '${expected == null ? '' : '. Expected type: $expected'}.',
-       );
+  MissingArgumentException(this.parameter, {this.function = '', this.expected})
+    : super(
+        'Missing required argument "$parameter"'
+        '${function.isEmpty ? '' : ' for $function'}'
+        '${expected == null ? '' : '. Expected type: $expected'}.',
+      );
 }
 
 /// Thrown when a required dictionary file cannot be found.

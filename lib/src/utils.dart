@@ -9,7 +9,6 @@ import 'package:path/path.dart' as p;
 /*                            EXTENSIONS                            */
 /* ================================================================ */
 
-
 /// Adds convenience accessors for working with regular expression matches.
 extension RegExpMatchAllGroups on RegExpMatch {
   /// Returns all captured groups as a non-nullable list.

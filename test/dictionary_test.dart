@@ -70,7 +70,9 @@ void main() {
         expect(emptyD.characters.length, 0);
         expect(emptyD.rules.length, 0);
         expect(
-          emptyD.toString().startsWith('Dictionary<Character, Rule> "emptyD": 0 (depth)'),
+          emptyD.toString().startsWith(
+            'Dictionary<Character, Rule> "emptyD": 0 (depth)',
+          ),
           true,
         );
       });

@@ -9,4 +9,5 @@ export 'src/text_modifier.dart';
 
 export 'src/dictionary_io.dart'
     if (dart.library.html) 'src/dictionary_io_stub.dart';
-    // if (dart.library.js_interop) 'src/dictionary_io_stub.dart';
+
+// if (dart.library.js_interop) 'src/dictionary_io_stub.dart';

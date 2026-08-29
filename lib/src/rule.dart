@@ -18,22 +18,31 @@ class Rule extends Character with CopyEngine<Rule> {
   /// access data content directly
   /// The level assigned to this rule.
   String get level => data['level'] as String;
+
   /// The title of this rule.
   String get title => data['title'] as String;
+
   /// The subtitle of this rule.
   String get subtitle => data['subtitle'] as String;
+
   /// The explanation describing this rule.
   String get explanation => data['explanation'] as String;
+
   /// Tags associated with this rule.
   List<String> get tags => data['tags'] as List<String>;
+
   /// Character structures associated with this rule.
   List<String> get structures => data['structures'] as List<String>;
+
   /// Character structures representing the opposite form of this rule.
   List<String> get structuresOpp => data['structuresOpp'] as List<String>;
+
   /// Example sentences associated with this rule.
   List<Sentence> get sentences => data['sentences'] as List<Sentence>;
+
   /// Characters associated with this rule.
   Dictionary get characters => data['characters'] as Dictionary;
+
   /// Characters representing the opposite side of this rule.
   Dictionary get charactersOpp => data['charactersOpp'] as Dictionary;
 
@@ -45,7 +54,7 @@ class Rule extends Character with CopyEngine<Rule> {
 
   @override
   List<String> get baseCategories => ['level', 'title', 'subtitle'];
-  
+
   /// The dictionary type used for linked character collections.
   final Type dictionaryType;
 
@@ -176,7 +185,6 @@ class Rule extends Character with CopyEngine<Rule> {
     }
   }
 
-
   /// Sets and normalizes a rule category.
   ///
   /// Text values are trimmed, list-based values are normalized to lists
@@ -238,7 +246,6 @@ class Rule extends Character with CopyEngine<Rule> {
         .toList();
   }
 
-
   /// Prevents addition through the character operator for rules.
   ///
   /// Rules manage their linked character dictionaries explicitly rather
@@ -255,18 +262,14 @@ class Rule extends Character with CopyEngine<Rule> {
 
   /// Returns cleaned references for the characters associated with this rule.
   List<String> get references => characters.characters
-      .map(
-        (char) => modifier(char['simplified']).toCleanRef().result as String,
-      )
+      .map((char) => modifier(char['simplified']).toCleanRef().result as String)
       .where((char) => char.isNotEmpty)
       .toList();
 
   /// Returns cleaned references for characters other than [thisChar].
   List<String> _referenceOthers(Character thisChar) => charactersAll.characters
       .where((char) => char != thisChar)
-      .map(
-        (char) => modifier(char['simplified']).toCleanRef().result as String,
-      )
+      .map((char) => modifier(char['simplified']).toCleanRef().result as String)
       .where((char) => char.isNotEmpty)
       .toList();
 

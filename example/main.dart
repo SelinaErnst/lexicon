@@ -53,7 +53,7 @@ void main() async {
   print(char);
   print(
     'Pinyin: ${char.toneMarkedPinyin}'
-    '\nNumeric Pinyin: ${char.numericPinyin}'
+    '\nNumeric Pinyin: ${char.numericPinyin}',
   );
   print(char.toMarkdownTable());
 }

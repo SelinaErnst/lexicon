@@ -5,7 +5,6 @@ import 'text_modifier.dart';
 /// Input text is normalized during construction using the provided
 /// [TextModifier].
 class Sentence {
-
   /// Text modifier used to normalize and format sentence content.
   final TextModifier<String> mod;
 
@@ -21,7 +20,6 @@ class Sentence {
   String get pinyin => _processedPinyin;
   String _processedPinyin = '';
   String _pinyin = '';
-
 
   /* ================================================================ */
   /*                            CONSTRUCTOR                           */
@@ -67,7 +65,7 @@ class Sentence {
   }
 
   /* –––––––––––––––––––––––– representation –––––––––––––––––––––––– */
-  
+
   /// Returns a short textual representation using the sentence text.
   @override
   String toString() {
@@ -77,7 +75,7 @@ class Sentence {
   /// Converts the sentence into a map representation.
   Map<String, String> toMap() {
     return {'text': text, 'pinyin': pinyin, 'translation': translation};
-  } 
+  }
 
   /* –––––––––––––––––––––––––––– syntax –––––––––––––––––––––––––––– */
 

@@ -282,7 +282,9 @@ void main() {
     });
 
     test('reconfigure character', () {
-      var simpleCopy = simple.reconfigure(categories: {'english': int, 'test': int});
+      var simpleCopy = simple.reconfigure(
+        categories: {'english': int, 'test': int},
+      );
       expect(simpleCopy == simple, true);
       expect(simpleCopy.exact(simple, ignoreNull: true), true);
       expect(simpleCopy.exact(simple, ignoreNull: false), false);
@@ -366,7 +368,7 @@ void main() {
         categories: {'test': int},
         entry: {'test': 0},
       );
-      expect(chartest['test'],'');
+      expect(chartest['test'], '');
     });
 
     test('add syntax', () {
