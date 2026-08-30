@@ -66,6 +66,10 @@ void main() async {
     mapColor: getColors(),
     mapColorFav: getFaves(),
   );
-  chDictionary.write(File('assets/MCD.txt'), mod: mod, template: File('assets/pleco.chd'));
+  chDictionary.write(
+    File('assets/MCD.txt'),
+    mod: mod,
+    template: File('assets/pleco.chd'),
+  );
   /* ––––––––––––––––––––––––– pleco format ––––––––––––––––––––––––– */
 }
