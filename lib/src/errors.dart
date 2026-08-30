@@ -212,7 +212,7 @@ class FileNotFoundException extends LexiconException {
 
   /// Creates an exception for a missing file at [path].
   const FileNotFoundException(this.path)
-    : super('Dictionary file was not found: "$path".');
+    : super('File was not found: "$path".');
 }
 
 /// Thrown when a dictionary file uses an unsupported format.

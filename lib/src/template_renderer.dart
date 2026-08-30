@@ -1,9 +1,10 @@
-import "utils.dart";
-import "package:lexicon/src/text_modifier.dart";
-import "package:lexicon/src/character.dart";
-import "dart:io";
 import "package:logging/logging.dart";
 import 'package:collection/collection.dart';
+import "dart:io";
+import "utils.dart";
+import "errors.dart";
+import "text_modifier.dart";
+import "character.dart";
 
 final Logger _log = Logger('WriterLog');
 
@@ -98,7 +99,7 @@ class Writer {
         }
         return lines.join('');
       }
-      throw Error();
+      throw FileNotFoundException(file.path);
     }
     return '';
   }
