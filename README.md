@@ -245,6 +245,9 @@ This is what a user dictionary entry would look like. The format is specified in
   <img src="assets/ba1_page2.png" width="45%">
 </p>
 
+| P1 | P2 |
+|---|---|
+| ![Image 1](assets/ba1_page1.png) | ![Image 2](assets/ba1_page2.png) |
 
 # Additional information
 
