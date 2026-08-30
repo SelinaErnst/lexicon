@@ -71,7 +71,7 @@ The formatting definitions are taken from `assets/syntax.json`, while the color 
 Import Lexicon into your Dart project:
 
 ```dart
-import 'package:lexicon/lexicon.dart';
+import 'package:suhan_lexicon/suhan_lexicon.dart';
 ```
 
 The main functionality is provided by `Character` and `Dictionary`, while utilities such as `TextModifier` can be used to process and prepare the associated language data.
