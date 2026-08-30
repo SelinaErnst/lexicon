@@ -269,6 +269,7 @@ void main() {
       expect(filled.filled.contains('simplified'), true);
       expect(empty.missing.contains('english'), false);
       expect(filled.missing.contains('strokes_count'), true);
+      expect(filled.toMap()['strokes_count'], null);
     });
 
     test('uniqueID requires pinyin', () {

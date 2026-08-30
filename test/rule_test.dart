@@ -88,21 +88,26 @@ void main() {
             {'simplified': '我', 'pinyin': 'wo3', 'test': 'a'},
           ],
         };
-        Rule r = Rule(
+        Rule rID = Rule(
           connection: Character(baseCategories: ['ID'], entry: {'ID': 'test'}),
         );
-        r = Rule(
+        expect(rID.characters.length, 1);
+        Rule rBASE = Rule(
           connection: Character(
             baseCategories: ['simplified', 'traditional', 'pinyin'],
           ),
           entry: entry,
         );
-        r = Rule(connection: ChCharacter(entry: {'simplified': '学'}));
-        r = ChRule(
+        Rule rChChar = Rule(
+          connection: ChCharacter(entry: {'simplified': '学'}),
+        );
+        expect(rChChar.copyWith(entry) == rBASE, true);
+
+        Rule chr = ChRule(
           connection: ChCharacter(entry: {'simplified': '学'}),
           entry: entry,
         );
-        expect(r.characters.runtimeType, ChDictionary);
+        expect(chr.characters.runtimeType, ChDictionary);
       });
       test('empty Rule', () {
         expect(filled.isEmpty, true);
@@ -110,7 +115,10 @@ void main() {
         expect(empty.isCompletelyEmpty, true);
         expect(empty.strict, true);
         expect(empty.title, '');
+        expect(empty.explanation, '');
         expect(empty.tags.runtimeType, List<String>);
+        expect(empty.structures.length, 0);
+        expect(empty.structuresOpp.isEmpty, true);
 
         expect(empty.categories['characters'], ChDictionary);
         expect(empty.characters.runtimeType, ChDictionary);
@@ -173,6 +181,11 @@ void main() {
           identityHashCode(rule.characters.rules.first),
           identityHashCode(rule),
         );
+
+        expect(rule.strict, true);
+        final relaxed = rule.relax();
+        expect(relaxed.runtimeType, ChRule);
+        expect(relaxed.strict, true);
 
         final copyCharacters = empty.characters.copy();
         expect(

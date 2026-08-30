@@ -37,8 +37,6 @@ class Writer {
   ContentBlock? _currentBlock;
   String _currentLine = "";
 
-  static final Map<String, String> _mapInstructors = {'newline': '<N>'};
-
   /// looks for first container <...>
   static final RegExp _rContainer = RegExp(r'.*?<(.*?)>(.*)');
 
@@ -91,9 +89,7 @@ class Writer {
       if (file.existsSync()) {
         List<String> lines = file.readAsLinesSync();
         if (keepNewline) {
-          lines = lines
-              .map((l) => l.isEmpty ? _mapInstructors['newline']! : l)
-              .toList();
+          lines = lines.map((l) => l.isEmpty ? '<N>' : l).toList();
         } else {
           lines = lines.where((l) => l.isNotEmpty).toList();
         }
@@ -144,7 +140,7 @@ class Writer {
       if (_blocks.contains(container.toLowerCase())) {
         _currentBlock = ContentBlock(character!, mod: mod, cmd: container);
         final matchBlock = _rBlock.firstMatch(_currentTmpl);
-        if (matchBlock == null) throw Error();
+        if (matchBlock == null) throw Exception('Cannot find a Container.');
         final String tmplBlock = matchBlock.group(1) ?? '';
         _currentTmpl = matchBlock.group(2) ?? '';
         _currentLine += _currentBlock!.writeContent(tmplBlock);
@@ -270,8 +266,6 @@ class Content {
         'color': _mod.getColor(style[1]) ?? '',
         'size': _mod.getFullCommand(style[2]) ?? 'normal', //
       };
-    } else {
-      _styleElements = {};
     }
   }
 
@@ -404,16 +398,20 @@ Map<String, dynamic> getContSpecs(String container, String type) {
   RegExpMatch? outerMatch = outerPattern.firstMatch(container);
   outerMatch =
       outerMatch ?? outerPattern.firstMatch(getDefaultContainer(type: type));
-  if (outerMatch == null) throw Error();
+  if (outerMatch == null) {
+    throw Exception('Container failed to get specs: $container');
+  }
   String? contSpecs = outerMatch.group(2);
   contSpecs = contSpecs ?? getDefaultContainer(onlySpecs: true);
   RegExpMatch? innerMatch = innerPattern.firstMatch(contSpecs);
   innerMatch =
       innerMatch ??
       innerPattern.firstMatch(getDefaultContainer(onlySpecs: true));
-  if (innerMatch == null) throw Error();
+  if (innerMatch == null) {
+    throw Exception('Container specs failed to get specs: $contSpecs');
+  }
   if (outerMatch.allGroups.length != 3 || innerMatch.allGroups.length != 3) {
-    throw Error();
+    throw Exception('Container has more than the expected specs.');
   }
   return {
     'type': outerMatch.group(1)!.toUpperCase(),

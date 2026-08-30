@@ -82,16 +82,6 @@ class CategoryTypeMismatchException extends LexiconException {
       );
 }
 
-/// Thrown when a required category is missing a value.
-class MissingRequiredCategoryException extends LexiconException {
-  /// The required category that is missing.
-  final String category;
-
-  /// Creates an exception for a missing required [category].
-  const MissingRequiredCategoryException(this.category)
-    : super('Required category "$category" is missing.');
-}
-
 /// Thrown when an input value is incompatible with the modifier's declared type.
 class InvalidModifierInputException extends LexiconException {
   /// The type expected by the [TextModifier].

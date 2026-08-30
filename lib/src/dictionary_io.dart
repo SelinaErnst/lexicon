@@ -220,13 +220,15 @@ extension DictionaryIO<C extends Character, R extends Rule>
     bool add = true,
   }) async {
     _log.fine('Read .txt file.');
-    throw UnimplementedFeatureException('_readTXT');
+    // throw UnimplementedFeatureException('_readTXT');
+    return false;
   }
 
   /// Parser implementation for reading SQLite or database (.db) files.
   Future<bool> _readDB(File file, {String? name, bool add = true}) async {
     _log.fine('Read .db file.');
-    throw UnimplementedFeatureException('_readDB');
+    // throw UnimplementedFeatureException('_readDB');
+    return false;
   }
 
   /* ================================================================ */
@@ -340,6 +342,7 @@ extension DictionaryIO<C extends Character, R extends Rule>
   /// Exporters converting dictionary datasets down into database storage connections.
   Future<bool> _toDB(File file, {bool overwrite = true}) async {
     _log.fine('Write to .db file.');
-    throw UnimplementedFeatureException('_toDB');
+    // throw UnimplementedFeatureException('_toDB');
+    return false;
   }
 }

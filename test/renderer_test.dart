@@ -62,6 +62,12 @@ void main() async {
     expect(getContSpecs(container, 'H'), bad);
     container = '<H:[]:PLACEHOLDER > <H:[nb|grey|available]:CLASSIFIER: ';
     expect(getContSpecs(container, 'H'), bad);
+    container = '<H:[nb|grey|available]:HI:CLASSIFIER: ';
+    expect(getContSpecs(container, 'H')['data'], 'HI:CLASSIFIER: ');
+    container = '<H:[nb|grey|available|test]:CLASSIFIER: ';
+    expect(getContSpecs(container, 'H'), good);
+    container = '<H:[nb|grey|test|available]:CLASSIFIER: ';
+    expect(getContSpecs(container, 'H')['specs'][2], 'test');
   });
 
   group('Content Controller', () {
@@ -96,6 +102,10 @@ void main() async {
       expect(cont.writeContent(), '');
       cont = Content('<I:[]:english>', dict[0], mod);
       expect(cont.writeContent(), '[eight, 8]');
+      expect(
+        () => Content('<B:[]:english>', dict[0], mod),
+        throwsA(isA<Error>()),
+      );
     });
 
     test('write string content', () {
@@ -132,6 +142,17 @@ void main() async {
       expect(w.compile(dict[3]).result.isNotEmpty, true);
       expect(w.character == dict[3], true);
       expect(w.text != w.result, true);
+
+      Writer wtab = Writer(mod, template: '<tab>');
+      expect(wtab.compile(dict[1]).text, '');
+      wtab = Writer(mod, template: '<tab><E>');
+      expect(wtab.compile(dict[1]).text, '');
+      wtab = Writer(mod, template: '<TAB><E>');
+      expect(wtab.compile(dict[1]).text, '');
+      wtab = Writer(mod, template: '<LEFT>{');
+      expect(() => wtab.compile(dict[1]).text, throwsA(isA<Exception>()));
+      wtab = Writer(mod, template: '<');
+      expect(wtab.compile(dict[1]).text, '');
     });
   });
 }

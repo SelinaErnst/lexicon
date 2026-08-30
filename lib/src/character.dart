@@ -183,8 +183,6 @@ class Character {
   /// behavior used by this character.
   ///
   /// Every category listed in [baseCategories] is required to have a `String` value.
-  /// The constructor throws [MissingRequiredCategoryException] if a required
-  /// base category is missing.
   Character({
     Map<String, Type> categories = const {},
     Map<String, dynamic> entry = const {},
@@ -220,16 +218,6 @@ class Character {
     entry.forEach((category, value) {
       set(category, value);
     });
-
-    for (final idKey in this.baseCategories) {
-      final value = data[idKey];
-      if (value == null) {
-        _log.shout(
-          'Mandatory field missing: Each character entry requires a valid $idKey string.',
-        );
-        throw MissingRequiredCategoryException(idKey);
-      }
-    }
 
     _log.info('Successfully created character: ${toString()}');
   }

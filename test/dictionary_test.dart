@@ -1,3 +1,4 @@
+import 'package:suhan_lexicon/src/utils.dart';
 import 'package:test/test.dart';
 import 'package:suhan_lexicon/suhan_lexicon.dart';
 import 'package:suhan_lexicon/src/errors.dart';
@@ -93,6 +94,11 @@ void main() {
         expect(filledChD.sortingKey, 'pinyin');
         expect(filledChD.sortingOrd, 'ascending');
         expect(filledChD.characters.length, 4);
+        expect(filledChD.toMapList().length, 4);
+        expect(
+          convertMixedList(filledChD.toMapList()).runtimeType,
+          List<dynamic>,
+        );
         expect(filledChD.rules.length, 0);
         expect(
           filledChD.hashCodeFormatted.length,
@@ -518,6 +524,11 @@ void main() {
                 chd.readSync(File('assets/fail.jsonl'), categories: categories),
             throwsA(isA<LexiconException>()),
           );
+
+          expect(
+            () => chd.read(File('assets/ChD.db'), categories: categories),
+            throwsA(isA<LexiconException>()),
+          );
         });
 
         test('read rule jsonl', () async {
@@ -551,6 +562,13 @@ void main() {
             () => exampleChD.write(File('assets/example.txt')),
             throwsA(isA<LexiconException>()),
           );
+          expect(
+            () => exampleChD.write(
+              File('assets/example.txt'),
+              template: File('assets/fail.chd'),
+            ),
+            throwsA(isA<LexiconException>()),
+          );
         });
 
         test('write jsonl', () {
@@ -559,6 +577,22 @@ void main() {
                 categories: {'english': List<String>, 'german': List<String>},
               )
               .write(File('assets/example.jsonl'));
+
+          exampleChD
+              .reconfigure(
+                categories: {'english': List<String>, 'german': List<String>},
+              )
+              .write(File('assets/example'), format: 'jsonl');
+
+          expect(
+            () => exampleChD.write(File('assets/example')),
+            throwsA(isA<LexiconException>()),
+          );
+
+          expect(
+            () => exampleChD.write(File('assets/example.db')),
+            throwsA(isA<LexiconException>()),
+          );
         });
 
         test('write db', () {
@@ -585,6 +619,7 @@ void main() {
         expect(exampleChD.search(pattern: "ba1", exact: true).length, 2);
         expect(exampleChD.search(pattern: "gan1", exact: true).length, 2);
         expect(exampleChD.search(pattern: "gan1", exact: false).length, 3);
+        expect(exampleChD.toMapList().length, 73);
       });
     });
   });
