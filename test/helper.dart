@@ -12,12 +12,7 @@ Map<String, dynamic> getColors() {
 }
 
 Map<String, dynamic> getFaves() {
-  return {
-    "blue": "Dodger Blue",
-    "teal": "Strong Blue",
-    "green": "Cyan Blue",
-    "grey": "Light Slate Gray",
-  };
+  return readJSONSync(File('assets/named_colors.json'));
 }
 
 Map<String, dynamic> getCategories() {

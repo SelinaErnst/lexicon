@@ -1,6 +1,8 @@
 import 'package:suhan_lexicon/suhan_lexicon.dart';
 import 'dart:io';
 
+import '../test/helper.dart';
+
 void main() async {
   /* ––––––––––––––––––––––– create dictionary –––––––––––––––––––––– */
   Dictionary dictionary = Dictionary(
@@ -56,4 +58,14 @@ void main() async {
     '\nNumeric Pinyin: ${char.numericPinyin}',
   );
   print(char.toMarkdownTable());
+
+  /* ––––––––––––––––––––––––– pleco format ––––––––––––––––––––––––– */
+  TextModifier<String> mod = TextModifier(
+    '',
+    mapSyntax: getSyntax(),
+    mapColor: getColors(),
+    mapColorFav: getFaves(),
+  );
+  chDictionary.write(File('assets/MCD.txt'), mod: mod, template: File('assets/pleco.chd'));
+  /* ––––––––––––––––––––––––– pleco format ––––––––––––––––––––––––– */
 }

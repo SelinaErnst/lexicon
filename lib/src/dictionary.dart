@@ -259,7 +259,7 @@ class Dictionary<C extends Character, R extends Rule> extends Iterable<C> {
   ///
   /// Throws [UnsupportedLexiconOperationException] if [other] is not a supported type.
   Dictionary operator -(dynamic other) {
-    _log.fine('Substract ${other.runtimeType} from Dictionary $headString');
+    _log.fine('Subtract ${other.runtimeType} from Dictionary $headString');
 
     if (other is! Character && other is! Dictionary) {
       _log.shout('Subtraction is not supported for type ${other.runtimeType}');
@@ -301,16 +301,6 @@ class Dictionary<C extends Character, R extends Rule> extends Iterable<C> {
         '  categories: ${categories.length}\n'
         '  characters: ${characters.length}\n'
         '  rules: ${rules.length}';
-    // final header = headString;
-    // final String subhead =
-    // if (characters.isEmpty) return header;
-
-    // final buffer = StringBuffer('$header\n');
-    // for (var i = 0; i < characters.length; i++) {
-    //   final number = i.toString().padLeft(4);
-    //   buffer.write('$number: ${characters[i]}\n');
-    // }
-    // return buffer.toString();
   }
 
   /// Converts the dictionary's characters to a list representation.
@@ -417,7 +407,7 @@ class Dictionary<C extends Character, R extends Rule> extends Iterable<C> {
   }) {
     if (mapSyntax != null) _log.finest('Add command syntax to Dictionary');
     if (mapColor != null) _log.finest('Add colors to Dictionary.');
-    if (mapColorFav != null) _log.finest('Add favourite colors to Dictionary.');
+    if (mapColorFav != null) _log.finest('Add favorite colors to Dictionary.');
 
     _mapColor = mapColor;
     _mapSyntax = mapSyntax;

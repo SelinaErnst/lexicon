@@ -198,7 +198,7 @@ void main() {
           identityHashCode(empty),
         );
       });
-      test('editiong attributes directly will affect internal data', () {
+      test('editing attributes directly will affect internal data', () {
         empty.tags.add('x');
         expect(empty.tags, ['x']);
         Logger.root.level = Level.ALL;
