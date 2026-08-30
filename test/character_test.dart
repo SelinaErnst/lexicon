@@ -80,6 +80,7 @@ void main() {
       expect(empty.isEmpty, true);
       expect(empty.get('english'), null);
       expect(empty.contains('simplified'), true);
+      expect(empty.isCompletelyEmpty, true);
     });
 
     test('comparing characters', () {
@@ -90,6 +91,9 @@ void main() {
       expect(simple == char, true);
       expect(simple == filled, true);
       expect(filled == filled, true);
+      expect(copy.isCompletelyEmpty, true);
+      expect(simple.isCompletelyEmpty, false);
+      expect(filled.isCompletelyEmpty, false);
     });
 
     test('relax character strictness', () {
@@ -269,9 +273,9 @@ void main() {
 
     test('uniqueID requires pinyin', () {
       expect(empty.uniqueID(method: 'unicode'), 'empty_char');
-      // expect(charA.uniqueID(method: 'unicode'), 'empty_char');
-      // expect(charA.uniqueID(method: 'symbol'), 'empty_char');
-      // expect(charA.uniqueID(method: 'hash'), 'empty_char');
+      expect(charA.uniqueID(method: 'unicode'), 'empty_char');
+      expect(charA.uniqueID(method: 'symbol'), 'empty_char');
+      expect(charA.uniqueID(method: 'hash'), 'empty_char');
     });
 
     test('pinyin conversion', () {
@@ -348,7 +352,7 @@ void main() {
     });
 
     test('use info to show character data', () {
-      // expect(() => filled.info(), returnsNormally);
+      expect(() => filled.info(show: false), returnsNormally);
       expect(filled.toMarkdownTable().runtimeType, String);
     });
 

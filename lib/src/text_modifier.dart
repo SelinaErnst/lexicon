@@ -170,6 +170,12 @@ class TextModifier<T> {
     return this;
   }
 
+  /// Uses the current input to reset [result].
+  TextModifier<T> reset() {
+    result = _copyInput(_input);
+    return this;
+  }
+
   /// Passes a processed result to the configured [transform] callback.
   void transformResult() {
     if (transform != null) {
@@ -313,6 +319,22 @@ class TextModifier<T> {
   TextModifier<T> strip(String pattern, {bool ignoreEmpty = true}) {
     _process((text) {
       return text.strip(pattern);
+    }, ignoreEmpty: ignoreEmpty);
+    return this;
+  }
+
+  /// Removes occurrences of [pattern] from the end of result.
+  TextModifier<T> rstrip(String pattern, {bool ignoreEmpty = true}) {
+    _process((text) {
+      return text.rstrip(pattern);
+    }, ignoreEmpty: ignoreEmpty);
+    return this;
+  }
+
+  /// Removes occurrences of [pattern] from the beginning of result.
+  TextModifier<T> lstrip(String pattern, {bool ignoreEmpty = true}) {
+    _process((text) {
+      return text.lstrip(pattern);
     }, ignoreEmpty: ignoreEmpty);
     return this;
   }

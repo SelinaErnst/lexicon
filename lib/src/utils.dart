@@ -112,18 +112,18 @@ extension MapDeepCopy on Map<String, dynamic> {
   }
 }
 
-/// Adds a check for lists whose elements are all strings.
-extension ListStringCheck on List<dynamic> {
-  /// Whether every element in the list is a [String].
-  bool get isAllStrings {
-    if (this is List<String>) return true;
-    final int len = length;
-    for (int i = 0; i < len; i++) {
-      if (this[i] is! String) return false;
-    }
-    return true;
-  }
-}
+// /// Adds a check for lists whose elements are all strings.
+// extension ListStringCheck on List<dynamic> {
+//   /// Whether every element in the list is a [String].
+//   bool get isAllStrings {
+//     if (this is List<String>) return true;
+//     final int len = length;
+//     for (int i = 0; i < len; i++) {
+//       if (this[i] is! String) return false;
+//     }
+//     return true;
+//   }
+// }
 
 /* ================================================================ */
 /*                          TYPE COMPARISON                         */
@@ -139,12 +139,6 @@ bool isMapType(Type type) {
 bool isListType(Type type) {
   final String str = type.toString();
   return type == List || str == 'List' || str.contains('List<');
-}
-
-/// Whether [type] represents an [Error] type.
-bool isError(Type type) {
-  final String str = type.toString();
-  return str.contains('Error');
 }
 
 /// Compares two types by their general collection category.
@@ -359,14 +353,6 @@ Future<void> writeListToFile(List<dynamic> lines, File file) async {
   }
   await sink.flush();
   await sink.close();
-}
-
-/// Converts [ogMap] into a JSON string.
-///
-/// Nested values are converted to JSON-compatible representations before encoding.
-String convertMapToJsonString(Map<String, dynamic> ogMap) {
-  final Map<String, dynamic> cleanMap = convertMixedMap(ogMap);
-  return jsonEncode(cleanMap);
 }
 
 /// Converts [ogMap] into JSON and writes it to [file].

@@ -14,16 +14,6 @@ abstract class LexiconException implements Exception {
   String toString() => '$runtimeType: $message';
 }
 
-/// Thrown when a requested character cannot be found in a dictionary.
-class CharacterNotFoundException extends LexiconException {
-  /// The identifier used to look up the character.
-  final dynamic identifier;
-
-  /// Creates an exception for a character that could not be found.
-  const CharacterNotFoundException(this.identifier)
-    : super('No character matching "$identifier" was found in the dictionary.');
-}
-
 /// Thrown when input cannot be converted into the required dictionary data.
 class InvalidDictionaryDataException extends LexiconException {
   /// The kind of data that could not be processed.
@@ -48,6 +38,26 @@ class UnknownCategoryException extends LexiconException {
   /// Creates an exception for an unknown [category].
   const UnknownCategoryException(this.category)
     : super('Category "$category" does not exist.');
+}
+
+/// Thrown when a requested character cannot be found in a dictionary.
+class CharacterNotFoundException extends LexiconException {
+  /// The identifier used to look up the character.
+  final dynamic identifier;
+
+  /// Creates an exception for a character that could not be found.
+  const CharacterNotFoundException(this.identifier)
+    : super('No character matching "$identifier" was found in the dictionary.');
+}
+
+/// Thrown when a requested identifier cannot be used for a dictionary lookup.
+class InvalidIdentifierException extends LexiconException {
+  /// The supplied identifier value.
+  final Object? identifier;
+
+  /// Creates an exception for [identifier].
+  const InvalidIdentifierException(this.identifier)
+    : super('Unsupported lookup identifier: $identifier.');
 }
 
 /// Thrown when a value does not match the type required by a category.
@@ -105,16 +115,6 @@ class SyntaxNotConfiguredException extends LexiconException {
   /// Creates a syntax-configuration exception.
   const SyntaxNotConfiguredException()
     : super('Syntax has not been configured for this text modifier.');
-}
-
-/// Thrown when a requested identifier cannot be used for a dictionary lookup.
-class InvalidIdentifierException extends LexiconException {
-  /// The supplied identifier value.
-  final Object? identifier;
-
-  /// Creates an exception for [identifier].
-  const InvalidIdentifierException(this.identifier)
-    : super('Unsupported lookup identifier: $identifier.');
 }
 
 /// Thrown when a method or one of its supported options has no implementation.

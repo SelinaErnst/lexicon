@@ -50,7 +50,14 @@ extension DictionaryIO<C extends Character, R extends Rule>
   /// Checks whether [file] exists before performing a synchronous read.
   ///
   /// Throws [FileNotFoundException] if [file] does not exist.
-  void readSync(File file) {
+  void readSync(
+    File file, {
+    bool add = true,
+    Map<String, dynamic>? categories,
+    String? format,
+    String? name,
+    String? template,
+  }) {
     if (!file.existsSync()) {
       _log.shout('Dictionary file does not exist.');
       throw FileNotFoundException(file.path);
@@ -132,13 +139,13 @@ extension DictionaryIO<C extends Character, R extends Rule>
       _log.shout(
         'A valid file format is required. The options are: ${_extOptions.keys.toList()}',
       );
-      throw ArgumentError('Unsupported dictionary file format.', 'file');
+      throw UnsupportedFileFormatException(fileFormat.toString());
     }
 
     File targetFile = File(p.join(directory, '$filename$fileFormat'));
     if (!targetFile.existsSync()) {
       _log.shout('File does not exist.');
-      throw StateError('The target file does not exist.');
+      throw FileNotFoundException(targetFile.path);
     }
 
     final success = switch (fileFormat) {

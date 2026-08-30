@@ -401,7 +401,7 @@ class Dictionary<C extends Character, R extends Rule> extends Iterable<C> {
     _log.shout(
       'Invalid Type of identifier used for indexing: ${identifier.runtimeType}',
     );
-    throw CharacterNotFoundException(identifier);
+    throw InvalidIdentifierException(identifier);
   }
 
   /* ––––––––––––––––––––– syntax configuration ––––––––––––––––––––– */

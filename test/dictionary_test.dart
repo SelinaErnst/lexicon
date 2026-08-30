@@ -481,14 +481,58 @@ void main() {
         test('read dict jsonl', () async {
           ChDictionary chd = ChDictionary('chd');
           final categories = getCategories();
-
+          await chd.readCategories(File('assets/categories.json'));
           await chd.read(File('assets/MCD.jsonl'), categories: categories);
+          await chd.read(
+            File('assets/MCD'),
+            format: 'jsonl',
+            categories: categories,
+          );
+
+          expect(
+            () => chd.read(File('assets/fail'), categories: categories),
+            throwsA(isA<LexiconException>()),
+          );
+          expect(
+            () => chd.read(File('assets/fail.jsonl'), categories: categories),
+            throwsA(isA<LexiconException>()),
+          );
+          expect(
+            () => chd.read(File('assets/example.txt'), categories: categories),
+            throwsA(isA<LexiconException>()),
+          );
+          expect(
+            () => chd.read(
+              File('assets/categories.json'),
+              categories: categories,
+            ),
+            throwsA(isA<LexiconException>()),
+          );
+          expect(
+            () =>
+                chd.readSync(File('assets/MCD.jsonl'), categories: categories),
+            throwsA(isA<LexiconException>()),
+          );
+          expect(
+            () =>
+                chd.readSync(File('assets/fail.jsonl'), categories: categories),
+            throwsA(isA<LexiconException>()),
+          );
         });
 
         test('read rule jsonl', () async {
           ChDictionary chd = ChDictionary('chd');
           await chd.readRules(File('assets/grammar.jsonl'));
-          print(chd.rules);
+          expect(chd.rules.length, 28);
+
+          expect(
+            () => chd.readRules(File('assets/fail.jsonl')),
+            throwsA(isA<LexiconException>()),
+          );
+          expect(
+            () => chd.readRules(File('assets/example.txt')),
+            throwsA(isA<LexiconException>()),
+          );
         });
 
         test('write txt', () {
@@ -502,6 +546,10 @@ void main() {
               mapColorFav: getFaves(),
             ),
             template: File(tmpl),
+          );
+          expect(
+            () => exampleChD.write(File('assets/example.txt')),
+            throwsA(isA<LexiconException>()),
           );
         });
 

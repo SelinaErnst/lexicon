@@ -55,33 +55,38 @@ void main() {
       modifier = TextModifier<Null>(null);
       expect(modifier.strip(' ').result, null);
 
-      mapInput = {'a': 'a_'};
+      mapInput = {'a': '_a_'};
       modifier = TextModifier<dynamic>(mapInput);
       modifier.strip('_');
 
+      expect(modifier.result, {'a': 'a'});
       expect(modifier.result is Map<String, String>, true);
       expect(modifier.result != modifier.input, true);
 
       modifier = TextModifier<Map<String, dynamic>>(
         mapInput as Map<String, dynamic>,
       );
-      modifier.strip('_');
+      modifier.rstrip('_');
+      expect(modifier.result, {'a': '_a'});
       expect(modifier.result is Map<String, dynamic>, true);
       expect(modifier.result != modifier.input, true);
 
       mapInput = <String, dynamic>{'a': 'a_'};
       modifier = TextModifier(mapInput);
-      modifier.strip('_');
+      modifier.rstrip('_');
+      expect(modifier.result, {'a': 'a'});
       expect(modifier.result is Map<String, dynamic>, true);
       expect(modifier.result != modifier.input, true);
 
-      modifier.set([1, 'input_']);
-      modifier.strip('_');
+      modifier.set([1, '_input']);
+      modifier.lstrip('_');
+      expect(modifier.result, [1, 'input']);
       expect(modifier.result is List<dynamic>, true);
       expect(modifier.result != modifier.input, true);
 
-      modifier.set('input_');
+      modifier.set('_input_');
       modifier.strip('_');
+      expect(modifier.result, 'input');
       expect(modifier.result is String, true);
       expect(modifier.result != modifier.input, true);
     });

@@ -454,6 +454,11 @@ class Character {
   /// Whether at least one identifying category contains a value.
   bool get isNotEmpty => !isEmpty;
 
+  /// Whether all data is empty
+  ///
+  /// This checks content of all categories in [data], rather than only values in [identifier].
+  bool get isCompletelyEmpty => isMapCompletelyEmpty(toMap());
+
   /* –––––––––––––––––––––––– representation –––––––––––––––––––––––– */
 
   /// Returns a human-readable representation of the character.
@@ -622,6 +627,10 @@ class Character {
         categories[category] = internalType ?? targetType;
       } else {
         targetType = categories[category] ?? Null;
+      }
+
+      if (isListType(value.runtimeType) && isListType(targetType)) {
+        // print([value.runtimeType, targetType]);
       }
 
       if (isMapType(value.runtimeType) && isMapType(targetType)) {

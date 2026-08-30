@@ -107,6 +107,7 @@ void main() {
       test('empty Rule', () {
         expect(filled.isEmpty, true);
         expect(empty.isEmpty, true);
+        expect(empty.isCompletelyEmpty, true);
         expect(empty.strict, true);
         expect(empty.title, '');
         expect(empty.tags.runtimeType, List<String>);
