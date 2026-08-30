@@ -238,7 +238,7 @@ This is the first line of the resulting file `assets/MCD.txt`.
 ```text
 八	ba1	1A0AENG ◼ eight ◼ 8GER ◼ achtRAD ◼ KangXi 12: eightINFORMATION1A0PVARIANTS: 丷DISTINGUISH FROM: 入 [rù] · 人 [rén]DICTIONARY ENTRIES: 一二三四五六七八九十CHARACTER1A0PSTROKES: (2)񃔉 񃔊MNEMONICS: ◼ Indicates separation, to split somethingMEANING AS COMPONENT: ◼ to separate or distinguishORIGINS: 八 represents the original meaning "to separate or distinguish" using two separated strokes. It was borrowed for its pronunciation (i.e. via sound loan) to represent the number eight.ANCIENT FORM: AA10񃔇OCCURRENCES1A0PRELATIVES: 半 [bàn] · 分 [fēn] A0PAA00https://zi.tools/zi/八
 ```
-This is what a user dictionary entry would look like. The format is specified in `assets/pleco.chd`. The colors are defined in `assets/colors.json`, while named colors like `grey` are stored under `assets/named_colors.json`
+This is what the user dictionary entry would look like. The format is specified in `assets/pleco.chd`. The colors are defined in `assets/colors.json`, while named colors like `grey` are stored under `assets/named_colors.json`
 
 | P1 | P2 |
 |---|---|
