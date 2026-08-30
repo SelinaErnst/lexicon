@@ -33,7 +33,12 @@ jobs:
       - name: Run tests with coverage
         run: dart pub global run coverage:test_with_coverage
 
+      - name: Check coverage files
+        run: |
+          ls -la coverage
+          test -f coverage/lcov.info
+
       - name: Upload coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v4
         with:
           files: coverage/lcov.info
