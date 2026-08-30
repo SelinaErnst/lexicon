@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
-// import 'package:lexicon/lexicon.dart';
-import 'package:lexicon/src/errors.dart';
+// import 'package:suhan_lexicon/lexicon.dart';
+import 'package:suhan_lexicon/src/errors.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as p;

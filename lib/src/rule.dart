@@ -1,6 +1,6 @@
-import 'package:lexicon/lexicon.dart';
-import 'package:lexicon/src/errors.dart';
-import 'package:lexicon/src/utils.dart';
+import 'package:suhan_lexicon/suhan_lexicon.dart';
+import 'package:suhan_lexicon/src/errors.dart';
+import 'package:suhan_lexicon/src/utils.dart';
 import 'package:logging/logging.dart';
 
 final Logger _log = Logger('RuleLog');

@@ -1,7 +1,7 @@
-import 'package:lexicon/src/dictionary.dart';
-import 'package:lexicon/src/errors.dart';
-import 'package:lexicon/src/template_renderer.dart';
-import 'package:lexicon/src/text_modifier.dart';
+import 'package:suhan_lexicon/src/dictionary.dart';
+import 'package:suhan_lexicon/src/errors.dart';
+import 'package:suhan_lexicon/src/template_renderer.dart';
+import 'package:suhan_lexicon/src/text_modifier.dart';
 import 'package:test/test.dart';
 import "package:logging/logging.dart";
 import "dart:io";

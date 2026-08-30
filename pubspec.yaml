@@ -1,4 +1,4 @@
-name: lexicon
+name: suhan_lexicon
 description: "A pure Dart package for background character dictionaries and grammar rules."
 version: 0.0.1
 homepage: https://github.com/SelinaErnst/lexicon

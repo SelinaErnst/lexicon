@@ -1,10 +1,9 @@
-import 'package:lexicon/src/dictionary.dart';
-import 'package:lexicon/src/rule.dart';
-import 'package:lexicon/src/errors.dart';
-import 'package:lexicon/src/character.dart';
-import 'package:lexicon/src/sentence.dart';
-// import 'package:lexicon/lexicon/sentence.dart';
-import 'package:lexicon/src/text_modifier.dart';
+import 'package:suhan_lexicon/src/dictionary.dart';
+import 'package:suhan_lexicon/src/rule.dart';
+import 'package:suhan_lexicon/src/errors.dart';
+import 'package:suhan_lexicon/src/character.dart';
+import 'package:suhan_lexicon/src/sentence.dart';
+import 'package:suhan_lexicon/src/text_modifier.dart';
 import 'package:test/test.dart';
 import 'package:logging/logging.dart';
 import 'package:collection/collection.dart';

@@ -1,4 +1,4 @@
-import 'package:lexicon/lexicon.dart';
+import 'package:suhan_lexicon/suhan_lexicon.dart';
 import 'dart:io';
 
 void main() async {

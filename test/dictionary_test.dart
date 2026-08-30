@@ -1,6 +1,6 @@
 import 'package:test/test.dart';
-import 'package:lexicon/lexicon.dart';
-import 'package:lexicon/src/errors.dart';
+import 'package:suhan_lexicon/suhan_lexicon.dart';
+import 'package:suhan_lexicon/src/errors.dart';
 import 'package:logging/logging.dart';
 import 'dart:io';
 import 'helper.dart';

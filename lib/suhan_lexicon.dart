@@ -1,5 +1,5 @@
 /// A pure Dart package for background character dictionaries and grammar rules.
-library lexicon;
+library suhan_lexicon;
 
 export 'src/dictionary.dart';
 export 'src/character.dart';

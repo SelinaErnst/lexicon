@@ -1,5 +1,5 @@
-import 'package:lexicon/lexicon.dart';
-import 'package:lexicon/src/utils.dart';
+import 'package:suhan_lexicon/suhan_lexicon.dart';
+import 'package:suhan_lexicon/src/utils.dart';
 import 'package:test/test.dart';
 import 'dart:io';
 import 'package:logging/logging.dart';

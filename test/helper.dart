@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'package:lexicon/lexicon.dart';
-import 'package:lexicon/src/utils.dart';
+import 'package:suhan_lexicon/suhan_lexicon.dart';
+import 'package:suhan_lexicon/src/utils.dart';
 
 Map<String, dynamic> getSyntax() {
   return readJSONSync(File('assets/syntax.json'));

@@ -1,6 +1,6 @@
-import 'package:lexicon/src/sentence.dart';
-import 'package:lexicon/src/text_modifier.dart';
-import 'package:lexicon/src/utils.dart';
+import 'package:suhan_lexicon/src/sentence.dart';
+import 'package:suhan_lexicon/src/text_modifier.dart';
+import 'package:suhan_lexicon/src/utils.dart';
 import 'package:test/test.dart';
 import 'dart:io';
 import 'package:logging/logging.dart';

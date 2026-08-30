@@ -1,4 +1,4 @@
-import 'package:lexicon/src/errors.dart';
+import 'package:suhan_lexicon/src/errors.dart';
 import 'package:logging/logging.dart';
 import 'package:collection/collection.dart';
 import 'text_modifier.dart';
