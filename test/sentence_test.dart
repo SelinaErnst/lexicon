@@ -5,10 +5,6 @@ import 'package:test/test.dart';
 import 'dart:io';
 import 'package:logging/logging.dart';
 
-// void main() {
-//   runSentence();
-// }
-
 void main() {
   group('Sentence', () {
     late Sentence s;

@@ -163,7 +163,7 @@ void main() {
         expect(rule.uniqueID(method: 'hash'), '_1822514334');
 
         expect(rule.get('test'), null);
-        // print(rule.toMarkdownTable());
+        expect(rule.toMarkdownTable().length, 624);
         expect(identical(rule.characters.rules[0], rule), true);
       });
     });
@@ -174,7 +174,6 @@ void main() {
         filled['title'] = 'ABC';
         rule['title'] = 'TEST';
         expect(identical(empty.characters.rules[0], empty), true);
-        print([empty, empty.characters.rules[0]]);
         expect(identical(filled.characters.rules[0], filled), true);
         expect(identical(rule.characters.rules[0], rule), true);
         expect(

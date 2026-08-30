@@ -431,10 +431,6 @@ class Dictionary<C extends Character, R extends Rule> extends Iterable<C> {
     finalCategories.addAll({
       for (final category in baseCategories) category: String,
     });
-    // finalCategories.addAll({
-    //   for (final entry in categories.entries)
-    //     if (!baseCategories.contains(entry.key)) entry.key: entry.value,
-    // });
     finalCategories.addAll(
       newCategories.map((key, value) {
         if (value is String && _mapTypes.containsKey(value.toLowerCase())) {
@@ -447,16 +443,6 @@ class Dictionary<C extends Character, R extends Rule> extends Iterable<C> {
       }),
     );
     _categories = finalCategories;
-    // _categories = newCategories.map((key, value) {
-    //   if (value is String && _mapTypes.containsKey(value.toLowerCase())) {
-    //     return MapEntry(key, _mapTypes[value.toLowerCase()] as Type);
-    //   }
-    //   if (value is Type) {
-    //     return MapEntry(key, value);
-    //   }
-    //   return MapEntry(key, dynamic);
-    // });
-    // print(['#',_categories, categories]);
   }
 
   /* ================================================================ */
@@ -931,8 +917,10 @@ class Dictionary<C extends Character, R extends Rule> extends Iterable<C> {
       _sortOrd = resolvedOrd;
 
       characters.sort((firstChar, secondChar) {
-        final first = firstChar[resolvedKey] as String;
-        final second = secondChar[resolvedKey] as String;
+        final firstvalue = firstChar.get(resolvedKey) ?? '';
+        final first = firstvalue as String;
+        final secondvalue = secondChar.get(resolvedKey) ?? '';
+        final second = secondvalue as String;
         if (resolvedOrd == 'ascending') {
           return first.compareTo(second);
         } else {

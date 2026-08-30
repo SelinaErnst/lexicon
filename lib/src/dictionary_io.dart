@@ -68,7 +68,6 @@ extension DictionaryIO<C extends Character, R extends Rule>
   /// Reads a category schema from [file] and applies it to the dictionary.
   Future<void> readCategories(File file) async {
     final fileCategories = await readJSON<Map<String, dynamic>>(file);
-    // print(fileCategories);
     categories = fileCategories;
   }
 
@@ -304,10 +303,6 @@ extension DictionaryIO<C extends Character, R extends Rule>
   ) async {
     _log.fine('Write to .txt file.');
 
-    if (getExtension(file) != '.txt') {
-      _log.warning('File is in the incorrect format: ${getExtension(file)}');
-      return false;
-    }
     Writer w = Writer(mod, tmplFile: template);
     final lines = characters.map((char) => w.compile(char).result).toList();
     try {

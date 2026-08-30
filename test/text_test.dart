@@ -144,9 +144,6 @@ void main() {
         modStr.set('abc [ [list Text] a] abc');
         modList.set(['[a1a2]', 'ba4', '[chi1]']);
 
-        // Logger.root.level = Level.ALL;
-        // print(modStr.applySyntaxCommands(['tab']).result);
-        // Logger.root.level = Level.OFF;
         expect(
           () => modStr.applySyntaxCommands(['tab']),
           throwsA(isA<LexiconException>()),
@@ -255,29 +252,26 @@ void main() {
           '[chi1]',
         ]);
 
-        // print(
-        //   modAct.set('2', color: '').applySyntaxCommands([
-        //     'normal',
-        //     'normal',
-        //     'color',
-        //   ]).result,
-        // );
+        expect(
+          modAct.set('2', color: '').applySyntaxCommands([
+            'normal',
+            'normal',
+            'color',
+          ]).result,
+          '2',
+        );
       });
 
       test('apply normal', () {
         modAct.color = 'grey';
-        // modAct.color = '';
-        // print(
-        //   modAct.set('2').applySyntaxCommands([
-        //     'normal',
-        //     'normal',
-        //     'color',
-        //   ]).result,
-        // );
-
-        // final s =
-        //     '#C1  #NB1 ENG  #NB2  #C2 ◼ eight ◼ 8 #NL  #C1  #NB1 GER  #NB2  #C2 ◼ acht #NL  #C1  #NB1 RAD  #NB2  #C2 ◼ KangXi 12: eight #NL';
-        // print(s.strip('#NL'));
+        expect(
+          modAct.set('2').applySyntaxCommands([
+            'normal',
+            'normal',
+            'color',
+          ]).result,
+          '2',
+        );
       });
     });
   });

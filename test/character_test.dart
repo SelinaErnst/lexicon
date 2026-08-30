@@ -3,8 +3,6 @@ import 'package:suhan_lexicon/src/utils.dart';
 import 'package:test/test.dart';
 import 'package:suhan_lexicon/suhan_lexicon.dart';
 import 'package:logging/logging.dart';
-// import 'package:my_app/user_service.dart';
-
 import 'helper.dart';
 
 void main() {
@@ -66,21 +64,32 @@ void main() {
       charA = ChCharacter(entry: {'simplified': 'a', 'traditional': 'x'});
     });
 
+    test('empty Character', () {
+      final emptyChar = Character();
+      expect(emptyChar.baseCategories.length, 0);
+      expect(emptyChar.identifier.isEmpty, true);
+      expect(emptyChar.isEmpty, true);
+      expect(emptyChar.isCompletelyEmpty, true);
+      expect(emptyChar.uniqueID(), '0000000000');
+    });
+
+    test('empty ChCharacter', () {
+      final emptyChar = ChCharacter();
+      expect(emptyChar.baseCategories, ['simplified', 'traditional', 'pinyin']);
+      expect(emptyChar.identifier, ['', '', '']);
+      expect(emptyChar.isEmpty, true);
+      expect(emptyChar.isCompletelyEmpty, true);
+      expect(emptyChar.get('english'), null);
+      expect(emptyChar.contains('simplified'), true);
+      expect(emptyChar.uniqueID(), 'empty_char');
+    });
+
     test('create dictionary by adding characters together', () {
       var d = empty + simple + filled + charA + allchar;
       expect(d.length, 2);
       expect(simple.exact(d[0]), true);
       expect(filled.exact(d[0]), false);
       expect(() => allchar + '', throwsA(isA<LexiconException>()));
-    });
-
-    test('empty character', () {
-      expect(empty.identifier.length, 3);
-      expect(empty.identifier, ['', '', '']);
-      expect(empty.isEmpty, true);
-      expect(empty.get('english'), null);
-      expect(empty.contains('simplified'), true);
-      expect(empty.isCompletelyEmpty, true);
     });
 
     test('comparing characters', () {
