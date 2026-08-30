@@ -241,9 +241,10 @@ This is the first line of the resulting file `assets/MCD.txt`.
 This is what a user dictionary entry would look like. The format is specified in `assets/pleco.chd`. The colors are defined in `assets/colors.json`, while named colors like `grey` are stored under `assets/named_colors.json`
 
 <p align="center">
-  <img src="assets/ba1_page1.png" width="48%">
-  <img src="assets/ba1_page2.png" width="48%">
+  <img src="assets/ba1_page1.png" width="45%",style="border: 5px solid #ccc;">
+  <img src="assets/ba1_page2.png" width="45%">
 </p>
+
 
 # Additional information
 
