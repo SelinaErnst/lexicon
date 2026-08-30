@@ -3,9 +3,22 @@ name: Dart CI
 on:
   push:
     branches: [ main, master ]
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'analysis_options.yaml'
+      - '.github/workflows/**'
   pull_request:
     branches: [ main, master ]
-
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'analysis_options.yaml'
+      - '.github/workflows/**'
 jobs:
   test:
     runs-on: ubuntu-latest
