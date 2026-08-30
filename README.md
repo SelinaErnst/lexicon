@@ -15,6 +15,7 @@ and the Flutter guide for
 [![pub package](https://img.shields.io/pub/v/suhan_lexicon.svg)](https://pub.dev/packages/suhan_lexicon)
 [![pub points](https://img.shields.io/pub/points/suhan_lexicon.svg)](https://pub.dev/packages/suhan_lexicon/score)
 [![Dart CI](https://github.com/SelinaErnst/lexicon/actions/workflows/dart_test.yml/badge.svg)](https://github.com/SelinaErnst/lexicon/actions/workflows/dart_test.yml)
+[![codecov](https://codecov.io/gh/SelinaErnst/Lexicon/graph/badge.svg)](https://codecov.io/gh/SelinaErnst/Lexicon)
 [![License](https://img.shields.io/github/license/SelinaErnst/Lexicon)](https://github.com/SelinaErnst/Lexicon/blob/main/LICENSE)
 # Lexicon
 

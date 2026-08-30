@@ -32,7 +32,9 @@ Future<Dictionary> getExample() async {
   Dictionary dictionary = ChDictionary('MCD');
   dictionary.addSyntax(syntax, colors, mapColorFav: faves);
   await dictionary.read(File('assets/MCD.jsonl'), categories: categories);
-  await writeJsonToFile(categories, File('assets/test.json'));
-  await File('assets/test.json').delete();
+  final testfile = File('assets/test.json');
+  await writeJsonToFile(categories, testfile);
+
+  if (await testfile.exists()) await File('assets/test.json').delete();
   return dictionary;
 }
