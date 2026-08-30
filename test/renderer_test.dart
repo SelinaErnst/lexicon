@@ -124,8 +124,7 @@ void main() async {
       expect(cb.writeBlock('###'), '1A0P###');
     });
     test('writer', () {
-      String path =
-          '/home/selina/Applications/MyApps/suhan/packages/lexicon/assets/pleco.chd';
+      String path ='assets/pleco.chd';
 
       final Writer w = Writer(mod, tmplFile: File(path));
       expect(w.compile(dict[1]).result.isNotEmpty, true);

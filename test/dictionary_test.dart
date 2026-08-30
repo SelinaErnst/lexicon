@@ -492,8 +492,7 @@ void main() {
         });
 
         test('write txt', () {
-          final tmpl =
-              '/home/selina/Applications/MyApps/suhan/packages/lexicon/assets/pleco.chd';
+          final tmpl = 'assets/pleco.chd';
           exampleChD.write(
             File('assets/example.txt'),
             mod: TextModifier<String>(
