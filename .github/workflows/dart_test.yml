@@ -1,7 +1,6 @@
 name: Dart CI
 
 on:
-  workflow_dispatch:
   push:
     branches: [ main, master ]
     paths:
@@ -20,12 +19,13 @@ on:
       - 'pubspec.lock'
       - 'analysis_options.yaml'
       - '.github/workflows/**'
+  workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Dart
         uses: dart-lang/setup-dart@v1
@@ -53,7 +53,7 @@ jobs:
           test -f coverage/lcov.info
           
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: coverage/lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
