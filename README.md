@@ -15,8 +15,9 @@ and the Flutter guide for
 [![pub package](https://img.shields.io/pub/v/suhan_lexicon.svg)](https://pub.dev/packages/suhan_lexicon)
 [![pub points](https://img.shields.io/pub/points/suhan_lexicon.svg)](https://pub.dev/packages/suhan_lexicon/score)
 [![Dart CI](https://github.com/SelinaErnst/lexicon/actions/workflows/dart_test.yml/badge.svg)](https://github.com/SelinaErnst/lexicon/actions/workflows/dart_test.yml)
-[![codecov](https://codecov.io/gh/SelinaErnst/Lexicon/branch/main/graph/badge.svg)](https://codecov.io/gh/SelinaErnst/Lexicon)
+[![codecov](https://codecov.io/gh/SelinaErnst/Lexicon/graph/badge.svg?token=C4N0X9EO19)](https://codecov.io/gh/SelinaErnst/Lexicon)
 [![License](https://img.shields.io/github/license/SelinaErnst/Lexicon)](https://github.com/SelinaErnst/Lexicon/blob/main/LICENSE)
+
 
 # Lexicon
 
@@ -25,6 +26,15 @@ Lexicon is a Dart package for working with structured language and dictionary da
 The package is centered around **`Character`** and **`Dictionary`**, providing structures and utilities for representing, organizing, and processing language-related information.
 
 It also provides text-processing functionality, with a particular focus on **Chinese language data, Pinyin, and preparing data for Pleco**.
+
+## Getting Started
+
+Import Lexicon into your Dart project:
+
+```dart
+import 'package:suhan_lexicon/suhan_lexicon.dart';
+```
+
 
 ## Main Features
 
@@ -70,32 +80,9 @@ When language data needs to be prepared for use with Pleco, `TextModifier` provi
 The formatting definitions are taken from `assets/syntax.json`, while the color definitions are taken from `assets/colors.json`.
 
 
-## Getting Started
 
-Import Lexicon into your Dart project:
-
-```dart
-import 'package:suhan_lexicon/suhan_lexicon.dart';
-```
-
-The main functionality is provided by `Character` and `Dictionary`, while utilities such as `TextModifier` can be used to process and prepare the associated language data.
-
-
-Conceptually:
-
-``` dart
-final result = TextModifier<String>('Nǐ hǎo')
-    .toNumericPinyin() // 'Ni3 hao3'
-    .toPlainPinyin() // 'Ni hao'
-    .result;
-
-final result = TextModifier<String>({'pinyin':'Nǐ hǎo'})
-    .toNumericPinyin() // {'pinyin':'Ni3 hao3'} 
-    .toPlainPinyin() // {'pinyin':'Ni hao'} 
-    .result;
-```
 ****
-# Usage
+## Usage
 
 See: `example/main.dart`
 
@@ -233,11 +220,11 @@ Numeric Pinyin: ri4
 | **LINKS** | • &nbsp;https://zi.tools/zi/日 |
 | **URLS** | • &nbsp;https://img.zdic.net/zy/jiaguwen/42_ED55.svg<br>• &nbsp;https://ziphoenicia-1300189285.cos.ap-shanghai.myqcloud.com/swjz/4767.svg |
 
-## Additional information
+# Additional information
 
 This is an attempt of recreating an existing [app](https://github.com/SelinaErnst/ChineseDictionary) that was written in Python.   
 Lexicon was developed as a supporting library for applications that create and edit structured language data.
 
-## License
+# License
 
 See the `LICENSE` file for licensing information.
