@@ -6,3 +6,7 @@
 - Added `Rule` and `Sentence` for grammar-related data.
 - Added `TextModifier` for text and Pinyin processing.
 - Added dictionary reading and writing functionality.
+
+## 0.0.2
+
+- `Sentence`: parameter `pinyin` is now called `pronunciation`

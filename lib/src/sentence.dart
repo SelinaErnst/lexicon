@@ -1,6 +1,6 @@
 import 'text_modifier.dart';
 
-/// Represents a sentence with text, Pinyin, and translation.
+/// Represents a sentence with text, pronunciation, and translation.
 ///
 /// Input text is normalized during construction using the provided
 /// [TextModifier].
@@ -16,23 +16,23 @@ class Sentence {
   String get translation => _transl;
   String _transl = '';
 
-  /// Returns the processed, tone-marked Pinyin.
-  String get pinyin => _processedPinyin;
-  String _processedPinyin = '';
-  String _pinyin = '';
+  /// Returns the processed, tone-marked pronunciation.
+  String get pronunciation => _processedPronunciation;
+  String _processedPronunciation = '';
+  String _pronunciation = '';
 
   /* ================================================================ */
   /*                            CONSTRUCTOR                           */
   /* ================================================================ */
 
-  /// Creates a sentence from text, Pinyin, and translation.
+  /// Creates a sentence from text, pronunciation, and translation.
   ///
-  /// The text is cleaned as Chinese content, the Pinyin is normalized
-  /// to numeric form and processed into tone-marked Pinyin, and the
+  /// The text is cleaned as Chinese content, the pronunciation is normalized
+  /// to numeric form and processed into tone-marked pronunciation, and the
   /// translation is cleaned as English text.
   Sentence({
     String text = '',
-    String pinyin = '',
+    String pronunciation = '',
     String translation = '',
     TextModifier<String>? mod,
   }) : mod = mod ?? TextModifier<String>('') {
@@ -44,23 +44,23 @@ class Sentence {
         .result
         .trim();
 
-    _pinyin = pinyin;
-    _pinyin = this.mod
-        .set(_pinyin)
+    _pronunciation = pronunciation;
+    _pronunciation = this.mod
+        .set(_pronunciation)
         .removeSyntax()
         .toCleanLanguage('english')
         .toNumericPinyin()
         .result
         .trim();
-    _processedPinyin = this.mod.toToneMarkedPinyin().result.trim();
+    _processedPronunciation = this.mod.toToneMarkedPinyin().result.trim();
 
     _transl = translation;
     _transl = this.mod.set(_transl).toCleanLanguage('english').result;
   }
 
-  /// Whether the sentence contains no text, Pinyin, or translation.
+  /// Whether the sentence contains no text, pronunciation, or translation.
   bool get isEmpty {
-    if (_text.isEmpty && _transl.isEmpty && _pinyin.isEmpty) return true;
+    if (_text.isEmpty && _transl.isEmpty && _pronunciation.isEmpty) return true;
     return false;
   }
 
@@ -74,7 +74,11 @@ class Sentence {
 
   /// Converts the sentence into a map representation.
   Map<String, String> toMap() {
-    return {'text': text, 'pinyin': pinyin, 'translation': translation};
+    return {
+      'text': text,
+      'pronunciation': pronunciation,
+      'translation': translation,
+    };
   }
 
   /* –––––––––––––––––––––––––––– syntax –––––––––––––––––––––––––––– */
@@ -97,12 +101,12 @@ class Sentence {
   /// Returns the formatted sentence with its available components
   /// joined according to the configured newline syntax.
   String applySyntax({String color = 'grey'}) {
-    mod.set(pinyin);
+    mod.set(pronunciation);
     mod.color = color;
     mod.command = 'newline';
     final synNewLine = mod.getSyntax()[0];
-    final synPinyin = mod.applySyntaxCommands(['color']).result;
-    final List<String> result = [text, synPinyin, translation];
+    final synPronunciation = mod.applySyntaxCommands(['color']).result;
+    final List<String> result = [text, synPronunciation, translation];
     result.removeWhere((item) => item.isEmpty);
     return '${result.join(synNewLine)}$synNewLine';
   }

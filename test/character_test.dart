@@ -402,5 +402,17 @@ void main() {
       );
       expect(newChar['test'], '八 [ba1]');
     });
+
+    test('Character with Sentences / Dictionaries', () {
+      final myChar = Character(
+        baseCategories: ['ID'],
+        categories: {'sentences': List<Sentence>},
+        entry: {
+          'sentences': [Sentence(text: 'A', translation: 'B')],
+        },
+      );
+
+      print(myChar.data);
+    });
   });
 }

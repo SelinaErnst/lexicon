@@ -244,6 +244,10 @@ This is what the user dictionary entry would look like. The format is specified 
 |---|---|
 | <p align="center"><img src="assets/ba1_page1.png" width="75%"></p> | <p align="center"><img src="assets/ba1_page2.png" width="75%"></p> |
 
+# Plans
+
+- allow more types for Character (like Sentence or List of Sentences, nested Dictionaries)
+
 # Additional information
 
 This is an attempt of recreating an existing [app](https://github.com/SelinaErnst/ChineseDictionary) that was written in Python.   

@@ -233,7 +233,7 @@ class Rule extends Character with CopyEngine<Rule> {
 
             return Sentence(
               text: text,
-              pinyin: pinyin,
+              pronunciation: pinyin,
               translation: translation,
               mod: _staticModifier,
             );

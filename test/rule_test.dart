@@ -108,6 +108,7 @@ void main() {
           entry: entry,
         );
         expect(chr.characters.runtimeType, ChDictionary);
+        print(chr.categories);
       });
       test('empty Rule', () {
         expect(filled.isEmpty, true);
@@ -163,7 +164,7 @@ void main() {
         expect(rule.uniqueID(method: 'hash'), '_1822514334');
 
         expect(rule.get('test'), null);
-        expect(rule.toMarkdownTable().length, 624);
+        expect(rule.toMarkdownTable().length, 631);
         expect(identical(rule.characters.rules[0], rule), true);
       });
     });
@@ -295,9 +296,9 @@ void main() {
       rule.modify('title').replaceAll('ABER', 'aber');
       expect(rule.title, 'aber ich Mag Dich');
 
-      expect(rule['sentences'][0].pinyin, 'wǒ');
+      expect(rule['sentences'][0].pronunciation, 'wǒ');
       rule.modify('sentences').toNumericPinyin();
-      expect(rule['sentences'][0].pinyin, 'wǒ');
+      expect(rule['sentences'][0].pronunciation, 'wǒ');
     });
   });
 }

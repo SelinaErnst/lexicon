@@ -37,7 +37,11 @@ void main() {
     });
 
     setUp(() {
-      s = Sentence(text: 'abac.', pinyin: 'a1ba3c.', translation: 'abac.');
+      s = Sentence(
+        text: 'abac.',
+        pronunciation: 'a1ba3c.',
+        translation: 'abac.',
+      );
       empty = Sentence();
     });
 
@@ -46,7 +50,7 @@ void main() {
     test('Sentence attributes', () {
       expect(empty.isEmpty, true);
       expect(s.text, 'abac。');
-      expect(s.pinyin, 'ābǎc.');
+      expect(s.pronunciation, 'ābǎc.');
       expect(s.isEmpty, false);
       expect(s.toString(), 'Sentence: abac。');
       expect(s.toMap().length, 3);
@@ -65,7 +69,7 @@ void main() {
       final sts = Sentence(
         mod: mod,
         text: 'abac.',
-        pinyin: 'a1ba3c.',
+        pronunciation: 'a1ba3c.',
         translation: 'abac.',
       );
       expect(sts.applySyntax(), 'abac。ābǎc.abac.');
